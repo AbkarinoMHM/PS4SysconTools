@@ -13,12 +13,15 @@ namespace PS4_Syscon_Tools
             NONE = -1,
             DUMP_FULL = 0,          // Dump Full Syscon Flash
             DUMP_PARTIAL,           // Dump Partial Syscon Flash
+            DUMP_NVS_SNVS,          // Dump Syscon NVS/SNVS Only
             ERASE_FULL,             // Erase Full Syscon Flash (Danger)
             ERASE_EXCEPT_BOOT0,     // Erase Full Syscon Flash Expect Boot0 Block (Safe)
             ERASE_PARTIAL,          // Erase Partial Syscon Flash
+            ERASE_NVS_SNVS,         // Erase Syscon NVS/SNVS only
             WRITE_FULL,             // Write Full Syscon Flash
             WRITE_PARTIAL,          // Write Partial Syscon Flash
-            WRITE_NVS_SNVS          // Write Syscon NVS/SNVS Only
+            WRITE_NVS_SNVS,         // Write Syscon NVS/SNVS Only
+            ENABLE_DEBUG_MODE       // Enable Syscon Debug Mode (ReWrite Boot0 Blocks)
         };
 
         public enum SYSCON_COMMANDS
@@ -41,12 +44,17 @@ namespace PS4_Syscon_Tools
         public const int SYSCON_WRITE_BUFFER_SIZE = 0x100;
         public const int SYSCON_SERIAL_BUFFER_SIZE = 0x400;
         public const int SYSCON_BLOCKS_NO = 0x200;
-        public const long SYSCON_FULL_DUMP_SIZE = SYSCON_BLOCK_SIZE * SYSCON_BLOCKS_NO;
-        public const int SYSCON_BOOT0_BLOCK = 3;
+        public const long SYSCON_FLASH_SIZE = SYSCON_BLOCK_SIZE * SYSCON_BLOCKS_NO;
+        public const int SYSCON_BOOT0_BLOCKS = 4;
+        public const int SYSCON_FLASH_START_BLOCK = 0;
+        public const int SYSCON_FLASH_PARTIAL_START_BLOCK = 4;
+        public const int SYSCON_FLASH_END_BLOCK = 511;
+        public const int SYSCON_NVS_SNVS_START_BLOCK = 384;
+        public const int SYSCON_NVS_SNVS_END_BLOCK = 511;
+        public const long SYSCON_NVS_SNVS_SIZE = 128 * SYSCON_BLOCK_SIZE;
+        public const int SYSCON_DEBUG_SETTING_OFFSET = 0xC3;
 
         public const int SYSCON_OK = 0x00;
-        public const int SYSCON_WRITE_OK = 0x40;
-        public const int SYSCON_CMD_OK = 0x55;
         public const int SYSCON_ERR_INT = 0xF0;
         public const int SYSCON_ERR_READ = 0xF1;
         public const int SYSCON_ERR_ERSASE = 0xF4;
@@ -245,81 +253,7 @@ namespace PS4_Syscon_Tools
             return iRet;
         }
 
-        public int PS4SysconToolFullDump(string filePath) {
-            int iRet = -1;
-            int iReadedData = 0;
-            int iBlockNo = 0;
-            byte[] sysconFWBuffer = new byte[SYSCON_FULL_DUMP_SIZE];
-
-            if (String.IsNullOrEmpty(filePath)) {
-                return -1;
-            }
-
-            try
-            {
-                if (!serialPort.IsOpen || !isConnected) {
-                    return -2;
-                }
-
-                serialPort.DiscardInBuffer();
-                serialPort.DiscardOutBuffer();
-
-                // write syscon full dump command 0x03
-                serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_READ_CHIP }, 0, 1);
-
-                iBlockNo = 0;
-
-                while (iReadedData < SYSCON_FULL_DUMP_SIZE)
-                {
-
-                    OnUpdateProcessEvent(new UpdateProcessEventArgs(iReadedData, String.Format("Dumping Block No: {0:D03} At Address: 0x{1:X06}.", iBlockNo, iReadedData)));
-
-                    while (serialPort.BytesToRead < SYSCON_BLOCK_SIZE) {
-                    }
-
-
-                    iRet = serialPort.Read(sysconFWBuffer, iReadedData, SYSCON_BLOCK_SIZE);
-                    if (iRet != SYSCON_BLOCK_SIZE)
-                    {
-                        return -3;
-                    }
-
-                    iReadedData += SYSCON_BLOCK_SIZE;
-
-                    iBlockNo++;
-                }
-
-                if (iReadedData == SYSCON_FULL_DUMP_SIZE) {
-                    using (FileStream dumpFile = new FileStream(filePath, FileMode.OpenOrCreate))
-                    {
-                        using (BinaryWriter dumpFileWriter = new BinaryWriter(dumpFile))
-                        {
-                            dumpFileWriter.Write(sysconFWBuffer);
-                            sysconFWBuffer = new byte[SYSCON_FULL_DUMP_SIZE];
-                            dumpFileWriter.Flush();
-                            dumpFileWriter.Close();
-                        }
-
-                        dumpFile.Close();
-
-                        OnUpdateProcessEvent(new UpdateProcessEventArgs((int)SYSCON_FULL_DUMP_SIZE, "Dump Syscon FW Finsihed.."));
-                    }
-
-                    iRet = 0;
-
-                }
-
-            }
-            catch (Exception ex)
-            {
-                iRet = -1;
-                throw;
-            }
-
-            return iRet;
-        }
-
-        public int PS4SysconToolPartialDump(string filePath, int startBlock, int endBlock) {
+        public int PS4SysconToolDump(out byte[] buffer, int startBlock, int endBlock) {
             int iRet = -1;
             int iBlockNo = 0;
             int iNoOfBlocks = 0;
@@ -328,6 +262,7 @@ namespace PS4_Syscon_Tools
 
             if (startBlock > endBlock)
             {
+                buffer = new byte[] { };
                 return -2;
             }
 
@@ -352,13 +287,14 @@ namespace PS4_Syscon_Tools
 
                 if (!serialPort.IsOpen || !isConnected)
                 {
+                    buffer = new byte[] { };
                     return -2;
                 }
 
                 serialPort.DiscardInBuffer();
                 serialPort.DiscardOutBuffer();
 
-                // write syscon erase block command 0x04
+                // write syscon read block command 0x04
                 serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_READ_BLOCK, startblockNo[0], startblockNo[1], endblockNo[0], endblockNo[1] }, 0, 5);
 
                 for (int i = startBlock; i <= endBlock; i++)
@@ -373,6 +309,7 @@ namespace PS4_Syscon_Tools
                     iRet = serialPort.Read(sysconBuffer, iReadedData, SYSCON_BLOCK_SIZE);
                     if (iRet != SYSCON_BLOCK_SIZE)
                     {
+                        buffer = new byte[] { };
                         return -3;
                     }
 
@@ -382,6 +319,47 @@ namespace PS4_Syscon_Tools
 
                 if (iReadedData == sysconBuffer.Length)
                 {
+                    buffer = new byte[sysconBuffer.Length];
+
+                    Array.Copy(sysconBuffer, buffer, sysconBuffer.Length);
+
+                    iRet = 0;
+
+                }
+                else
+                {
+                    buffer = new byte[] { };
+                    return -4;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+
+            return iRet;
+        }
+
+        public int PS4SysconToolDump(string filePath, int startBlock, int endBlock) {
+            int iRet = -1;
+            int iNoOfBlocks = 0;
+            byte[] sysconBuffer;
+
+            if (startBlock > endBlock)
+            {
+                return -2;
+            }
+
+            iNoOfBlocks = (endBlock - startBlock) + 1;
+
+            sysconBuffer = new byte[iNoOfBlocks * SYSCON_BLOCK_SIZE];
+
+            try
+            {
+
+                iRet = PS4SysconToolDump(out sysconBuffer, startBlock, endBlock);
+                if (iRet == 0) {
                     using (FileStream dumpFile = new FileStream(filePath, FileMode.OpenOrCreate))
                     {
                         using (BinaryWriter dumpFileWriter = new BinaryWriter(dumpFile))
@@ -393,11 +371,8 @@ namespace PS4_Syscon_Tools
 
                         dumpFile.Close();
 
-                        OnUpdateProcessEvent(new UpdateProcessEventArgs((int)iNoOfBlocks, "Dump Partial Syscon FW Finsihed.."));
+                        OnUpdateProcessEvent(new UpdateProcessEventArgs((int)iNoOfBlocks, "Dump Syscon Firmware Process Finsihed.."));
                     }
-
-                    iRet = 0;
-
                 }
 
             }
@@ -411,7 +386,90 @@ namespace PS4_Syscon_Tools
             return iRet;
         }
 
-        public int PS4SysconToolPartialErase(int startBlock, int endBlock)
+        public int PS4SysconToolFullDump(string filePath)
+        {
+            int iRet = -1;
+            int iReadedData = 0;
+            int iBlockNo = 0;
+            byte[] sysconFWBuffer = new byte[SYSCON_FLASH_SIZE];
+
+            if (String.IsNullOrEmpty(filePath))
+            {
+                return -1;
+            }
+
+            try
+            {
+                if (!serialPort.IsOpen || !isConnected)
+                {
+                    return -2;
+                }
+
+                serialPort.DiscardInBuffer();
+                serialPort.DiscardOutBuffer();
+
+                // write syscon full dump command 0x03
+                serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_READ_CHIP }, 0, 1);
+
+                iBlockNo = 0;
+
+                while (iReadedData < SYSCON_FLASH_SIZE)
+                {
+
+                    OnUpdateProcessEvent(new UpdateProcessEventArgs(iReadedData, String.Format("Dumping Block No: {0:D03} At Address: 0x{1:X06}.", iBlockNo, iReadedData)));
+
+                    while (serialPort.BytesToRead < SYSCON_BLOCK_SIZE)
+                    {
+                    }
+
+
+                    iRet = serialPort.Read(sysconFWBuffer, iReadedData, SYSCON_BLOCK_SIZE);
+                    if (iRet != SYSCON_BLOCK_SIZE)
+                    {
+                        return -3;
+                    }
+
+                    iReadedData += SYSCON_BLOCK_SIZE;
+
+                    iBlockNo++;
+                }
+
+                if (iReadedData == SYSCON_FLASH_SIZE)
+                {
+                    using (FileStream dumpFile = new FileStream(filePath, FileMode.OpenOrCreate))
+                    {
+                        using (BinaryWriter dumpFileWriter = new BinaryWriter(dumpFile))
+                        {
+                            dumpFileWriter.Write(sysconFWBuffer);
+                            sysconFWBuffer = new byte[SYSCON_FLASH_SIZE];
+                            dumpFileWriter.Flush();
+                            dumpFileWriter.Close();
+                        }
+
+                        dumpFile.Close();
+
+                        OnUpdateProcessEvent(new UpdateProcessEventArgs((int)SYSCON_FLASH_SIZE, "Dumping Syscon Firmware Process Finsihed Successfully.."));
+                    }
+
+                    iRet = 0;
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                iRet = -1;
+                throw ex;
+            }
+
+            return iRet;
+        }
+
+        public int PS4SysconToolNVSSNVSDump(string filePath) {
+            return PS4SysconToolDump(filePath, SYSCON_NVS_SNVS_START_BLOCK, SYSCON_NVS_SNVS_END_BLOCK);
+        }
+
+        public int PS4SysconToolErase(int startBlock, int endBlock)
         {
             int iRet = -1;
             int iBlockNo = 0;
@@ -482,135 +540,28 @@ namespace PS4_Syscon_Tools
             return iRet;
         }
 
-        public int PS4SysconToolFullWrite(string filePath) {
-            int iRet = -1;
-            int iWrittenData = 0;
-            int iBlockNo = 0;
-            byte[] sysconFWBuffer = new byte[SYSCON_FULL_DUMP_SIZE];
-
-            if (String.IsNullOrEmpty(filePath))
-            {
-                return -1;
-            }
-
-            if (!File.Exists(filePath))
-            {
-                return -2;
-            }
-
-            OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Writting Syscon Full FW Process Started."));
-
-            OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Loading PS4 Syscon FW File Into Memory."));
-
-            using (FileStream fwFile = new FileStream(filePath, FileMode.Open))
-            {
-                using (BinaryReader fwFileReader = new BinaryReader(fwFile))
-                {
-                    sysconFWBuffer = fwFileReader.ReadBytes((int)SYSCON_FULL_DUMP_SIZE);
-
-                    fwFileReader.Close();
-                }
-
-                fwFile.Close();
-            }
-
-            try
-            {
-                if (!serialPort.IsOpen || !isConnected)
-                {
-                    return -2;
-                }
-
-                while (iWrittenData < SYSCON_FULL_DUMP_SIZE)
-                {
-
-                    OnUpdateProcessEvent(new UpdateProcessEventArgs(iBlockNo, String.Format("Writting Block No: {0:D03} At Address: 0x{1:X06}.", iBlockNo, iBlockNo * SYSCON_BLOCK_SIZE)));
-
-                    serialPort.DiscardInBuffer();
-                    serialPort.DiscardOutBuffer();
-
-                    byte[] blockNo = BitConverter.GetBytes((short)iBlockNo);
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        Array.Reverse(blockNo);
-                    }
-
-                    byte[] writeCmd = new byte[3 + SYSCON_WRITE_BUFFER_SIZE];
-
-                    writeCmd[0] = 0x06;
-                    writeCmd[1] = blockNo[0];
-                    writeCmd[2] = blockNo[1];
-
-                    Array.Copy(sysconFWBuffer, iWrittenData, writeCmd, 3, SYSCON_WRITE_BUFFER_SIZE);
-
-                    serialPort.Write(writeCmd, 0, writeCmd.Length); // write syscon write block command 0x06 1st half of block data
-
-                    while (serialPort.BytesToRead < 1)
-                    {
-                        System.Threading.Thread.Sleep(10);
-                    }
-
-                    response = serialPort.ReadByte();
-                    if (response != 0x00)
-                    {
-                        return -3;
-                    }
-
-                    iWrittenData += SYSCON_WRITE_BUFFER_SIZE;
-
-                    Array.Copy(sysconFWBuffer, iWrittenData, writeCmd, 3, SYSCON_WRITE_BUFFER_SIZE);
-
-                    serialPort.Write(writeCmd, 0, writeCmd.Length); // write syscon write block command 0x06 2nd half of block data
-
-                    while (serialPort.BytesToRead < 1)
-                    {
-                        System.Threading.Thread.Sleep(10);
-                    }
-
-                    response = serialPort.ReadByte();
-                    if (response != 0x00)
-                    {
-                        return -4;
-                    }
-
-                    iWrittenData += SYSCON_WRITE_BUFFER_SIZE;
-
-                    iBlockNo++;
-                }
-
-                OnUpdateProcessEvent(new UpdateProcessEventArgs((int)SYSCON_BLOCKS_NO, "Writting Syscon Full FW Finsihed Successfully!."));
-                iRet = 0;
-            }
-            catch (Exception ex)
-            {
-
-                throw ex;
-            }
-
-            return iRet;
+        public int PS4SysconToolFullErase()
+        {
+            return PS4SysconToolErase(SYSCON_FLASH_START_BLOCK, SYSCON_FLASH_END_BLOCK);
         }
 
-        public int PS4SysconToolPartialWrite(string filePath, int startBlock, int endBlock)
+        public int PS4SysconToolWrite(byte[] buffer, int startBlock, int endBlock)
         {
             int iRet = -1;
             int iWrittenData = 0;
             int iBlockNo = 0;
             int iNoOfBlocks = 0;
             int iCounter = 0;
-            int iOffset = 0;
             int iWriteDataLen = 0;
-            int iDataLen = 0;
-            byte[] sysconFWBuffer;
-            byte[] setDataCmd;
 
-            if (String.IsNullOrEmpty(filePath))
+            if (buffer == null)
             {
                 return -1;
             }
 
-            if (!File.Exists(filePath))
+            if (buffer.Length <= 0 || ((buffer.Length % SYSCON_BLOCK_SIZE) != 0))
             {
-                return -2;
+                return -1;
             }
 
             if (startBlock > endBlock)
@@ -622,25 +573,7 @@ namespace PS4_Syscon_Tools
 
             iWriteDataLen = iNoOfBlocks * SYSCON_BLOCK_SIZE;
 
-            sysconFWBuffer = new byte[iWriteDataLen];
-
-            OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Writting Syscon Full FW Process Started."));
-
-            OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Loading PS4 Syscon FW File Into Memory."));
-
-            using (FileStream fwFile = new FileStream(filePath, FileMode.Open))
-            {
-                using (BinaryReader fwFileReader = new BinaryReader(fwFile))
-                {
-                    int startBlockAddress = startBlock * SYSCON_BLOCK_SIZE;
-                    fwFile.Seek(startBlockAddress, SeekOrigin.Begin);
-                    sysconFWBuffer = fwFileReader.ReadBytes(iWriteDataLen);
-
-                    fwFileReader.Close();
-                }
-
-                fwFile.Close();
-            }
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Writting PS4 Syscon Firmware Process Started."));
 
             try
             {
@@ -669,42 +602,25 @@ namespace PS4_Syscon_Tools
 
                     serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_WRITE_BLOCK, blockNo[0], blockNo[1] }, 0, 3); // syscon write command
 
-                    iDataLen = 0;
-
-                    //System.Threading.Thread.Sleep(1);
-                    //System.Threading.Thread.Sleep(new TimeSpan(5000));
-
-                    serialPort.Write(sysconFWBuffer, iWrittenData, SYSCON_BLOCK_SIZE);
-
-                    //while (iDataLen < SYSCON_BLOCK_SIZE)    // SYSCON_BLOCK_SIZE
-                    //{
-                    //    serialPort.Write(sysconFWBuffer, iWrittenData + iDataLen, SYSCON_SERIAL_BUFFER_SIZE);
-                    //    //serialPort.Write(setDataCmd, 2 + iDataLen, SYSCON_SERIAL_BUFFER_SIZE); // write syscon write block command 0x06 1st half of block data
-                    //    iDataLen += SYSCON_SERIAL_BUFFER_SIZE;
-
-                    //    //serialPort.BaseStream.Flush();
-                    //    System.Threading.Thread.Sleep(new TimeSpan(5000));
-                    //}
-
-                    ////serialPort.Flush();
+                    serialPort.Write(buffer, iWrittenData, SYSCON_BLOCK_SIZE);
 
 
-                    while (serialPort.BytesToRead < 1) {
-                       int x  = serialPort.BytesToRead;
+                    while (serialPort.BytesToRead < 1)
+                    {
+                        //int x  = serialPort.BytesToRead;
                     }
 
                     bRet = (byte)serialPort.ReadByte();
-                    if (bRet != 0) {
+                    if (bRet != 0)
+                    {
                         return iRet;
                     }
 
                     iWrittenData += SYSCON_BLOCK_SIZE;
                     iCounter++;
-
-
                 }
 
-                OnUpdateProcessEvent(new UpdateProcessEventArgs(iNoOfBlocks, "Writting Syscon Partial FW Finsihed Successfully!."));
+                OnUpdateProcessEvent(new UpdateProcessEventArgs(iNoOfBlocks, "Writting Syscon Firmware Process Finsihed Successfully!."));
                 iRet = 0;
             }
             catch (Exception ex)
@@ -712,6 +628,115 @@ namespace PS4_Syscon_Tools
 
                 throw ex;
             }
+
+            return iRet;
+        }
+
+        public int PS4SysconToolWrite(string filePath, int startBlock, int endBlock)
+        {
+            int iRet = -1;
+            int iNoOfBlocks = 0;
+            int iWriteDataLen = 0;
+            byte[] sysconFWBuffer;
+
+            if (String.IsNullOrEmpty(filePath))
+            {
+                return -1;
+            }
+
+            if (!File.Exists(filePath))
+            {
+                return -2;
+            }
+
+            if (startBlock > endBlock)
+            {
+                return -2;
+            }
+
+            iNoOfBlocks = (endBlock - startBlock) + 1;
+
+            iWriteDataLen = iNoOfBlocks * SYSCON_BLOCK_SIZE;
+
+            sysconFWBuffer = new byte[iWriteDataLen];
+
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Writting PS4 Syscon Firmware Process Started."));
+
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Loading PS4 Syscon Firmware File Into Memory."));
+
+            using (FileStream fwFile = new FileStream(filePath, FileMode.Open))
+            {
+                using (BinaryReader fwFileReader = new BinaryReader(fwFile))
+                {
+                    int startBlockAddress = startBlock * SYSCON_BLOCK_SIZE;
+                    fwFile.Seek(startBlockAddress, SeekOrigin.Begin);
+                    sysconFWBuffer = fwFileReader.ReadBytes(iWriteDataLen);
+
+                    fwFileReader.Close();
+                }
+
+                fwFile.Close();
+            }
+
+            try
+            {
+                iRet = PS4SysconToolWrite(sysconFWBuffer, startBlock, endBlock);
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+
+            return iRet;
+        }
+
+        public int PS4SysconToolFullWrite(string filePath)
+        {
+            return PS4SysconToolWrite(filePath, SYSCON_FLASH_START_BLOCK, SYSCON_FLASH_END_BLOCK);
+        }
+       
+        public int PS4SysconToolEnableDebugMode() {
+            int iRet = SYSCON_OK;
+            byte[] sysconBoot0Buffer = new byte[SYSCON_BLOCK_SIZE];
+
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Enabling Syscon Debug Mode Process Started.."));
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(1, "Dumping Syscon Boot0 Blocks.."));
+
+            iRet = PS4SysconToolDump(out sysconBoot0Buffer, SYSCON_FLASH_START_BLOCK, SYSCON_FLASH_START_BLOCK + 1);
+            if (iRet != 0)
+            {
+                return iRet;
+            }
+
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Checking Syscon Boot0 Block If Debug Mode Already Enabled.."));
+
+            if (sysconBoot0Buffer[SYSCON_DEBUG_SETTING_OFFSET] == 0x04)
+            {
+                OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Enabling Syscon Debug Mode.."));
+                sysconBoot0Buffer[SYSCON_DEBUG_SETTING_OFFSET] = 0x85;
+            } else if ((sysconBoot0Buffer[SYSCON_DEBUG_SETTING_OFFSET] == 0x84) || (sysconBoot0Buffer[SYSCON_DEBUG_SETTING_OFFSET] == 0x85)) {
+              OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Syscon Debug Mode Already Enabled.."));
+              return -10;
+              }
+
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(2, "Erasing Syscon Boot0 Block.."));
+            iRet = PS4SysconToolErase(SYSCON_FLASH_START_BLOCK, SYSCON_FLASH_START_BLOCK);
+            if (iRet != 0)
+            {
+                return iRet;
+            }
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(2, "Syscon Boot0 Block Erased Successfully.."));
+
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(3, "Writing Syscon Boot0 Blocks.."));
+            iRet = PS4SysconToolWrite(sysconBoot0Buffer, SYSCON_FLASH_START_BLOCK, SYSCON_FLASH_START_BLOCK);
+            if (iRet != 0)
+            {
+                return iRet;
+            }
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(3, "Syscon Boot0 Block Written Successfully.."));
+
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Enabling Syscon Debug Mode Process Finished Successfully!!!.."));
 
             return iRet;
         }
