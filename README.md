@@ -3,7 +3,7 @@ PS4 Syscon Tools By Abkarino & EgyCnq:
 PS4 Syscon Tools is a free solution (software & hardware) that allow you to manipulate original PlayStation 4 Syscon chip (Renesas RL78/G13).
 It consists of 2 projects:
 - PS4 Syscon Tools (PC client to allow you to control your PS4 Syscon Flasher hardware).
-- PS4 Syscon Flasher (Hardware flasher based currently on Teensy++ 2.0).
+- PS4 Syscon Flasher (Hardware flasher based currently on Teensy++ 2.0 - Teensy 4.0).
 
 Features:
 =======================================
