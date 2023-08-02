@@ -19,12 +19,15 @@ Note : the read process here not use the infinty loop method that continue to du
   - NVS/SNVS only.    
 
 
-- Syscon Flash erase: 
+- Syscon Flash Erase: 
   - Full (<4.3 sec). 
   - Partial (erase any specific block or block range).
 
 - Enable Syscon Debug mode: 
 	- Allow you to only connect 3 wires to read/write your syscon by enabling OCD flag.
+	
+- Get Syscon Firmware Dump Info:
+	- Allow you to validate your syscon dump and get its firmware info (version, hash, debug mode status, magic validation).
 	
 Note : 	The process done on the fly so no need to dump the entire syscon and apply the patch then rewrite like some other tools.
 
