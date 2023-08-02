@@ -3,7 +3,7 @@ PS4 Syscon Tools By Abkarino & EgyCnq:
 PS4 Syscon Tools is a free solution (software & hardware) that allow you to manipulate original PlayStation 4 Syscon chip (Renesas RL78/G13).
 It consists of 2 projects:
 - PS4 Syscon Tools (PC client to allow you to control your PS4 Syscon Flasher hardware).
-- PS4 Syscon Flasher (Hardware flasher based currently on Teensy++ 2.0 - Teensy 4.0).
+- PS4 Syscon Flasher (Hardware flasher based currently on Teensy++ 2.0 - Teensy 4.0 - Teensy 4.1).
 
 Features:
 =======================================
@@ -32,15 +32,15 @@ Requirements:
 =======================================
 What you will need ?
 
-- Teensy++ 2.0. 
+- Teensy++ 2.0, Teensy 4.0 or Teensy 4.1. 
 - (100 to 200)~ ohm resistor. 
 - wires. 
 - LQFP 64 - 100 Socket Adapter (Optional) 
-- Soldering skills
+- Soldering skills (Mandatory).
 
 Connection Digrams:
 =======================================
-Please refer to HW directory to check the wiring digram for your hardware.
+Please refer to diagrams directory to check the wiring digram for your hardware.
 
 Usage - Tutorial:
 =======================================
@@ -70,3 +70,9 @@ Please follow us on twitter:
 As well as subscribe to our Youtube channle for more info and tutorials:
 
 - https://www.youtube.com/@AbkarinoMHM
+
+Donations:
+=========================================
+If you like our work and want to support us to get a new hardware to port our code to it or to be able to buy some damaged consoles to use it in reaserch, please donate to:
+
+PayPal: mh.nasr@outlook.com

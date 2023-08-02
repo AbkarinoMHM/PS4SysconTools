@@ -8,7 +8,6 @@ namespace PS4_Syscon_Tools
 {
     class PS4SysconTool
     {
-
         public enum SYSCON_PROCESS {
             NONE = -1,
             DUMP_FULL = 0,          // Dump Full Syscon Flash
@@ -21,7 +20,79 @@ namespace PS4_Syscon_Tools
             WRITE_FULL,             // Write Full Syscon Flash
             WRITE_PARTIAL,          // Write Partial Syscon Flash
             WRITE_NVS_SNVS,         // Write Syscon NVS/SNVS Only
-            ENABLE_DEBUG_MODE       // Enable Syscon Debug Mode (ReWrite Boot0 Blocks)
+            ENABLE_DEBUG_MODE,      // Enable Syscon Debug Mode (ReWrite Boot0 Blocks)
+            GET_DUMP_INFO           // Get Syscon Dump Info
+        };
+
+        public class SysconProcess
+        {
+            private short value;
+            private string name;
+            private bool enabled;
+
+            public short Value
+            {
+                get
+                {
+                    return value;
+                }
+
+                set
+                {
+                    this.value = value;
+                }
+            }
+
+            public string Name
+            {
+                get
+                {
+                    return name;
+                }
+
+                set
+                {
+                    name = value;
+                }
+            }
+
+            public bool Enabled
+            {
+                get
+                {
+                    return enabled;
+                }
+
+                set
+                {
+                    enabled = value;
+                }
+            }
+
+            public SysconProcess(short value, string name, bool enabled = true)
+            {
+                this.Value = value;
+                this.Name = name;
+                this.Enabled = enabled;
+            }
+
+
+        };
+
+        public static SysconProcess[] PS4SysconProcess = {
+            new SysconProcess((short)SYSCON_PROCESS.NONE, null, false),
+            new SysconProcess((short)SYSCON_PROCESS.DUMP_FULL, "Dump Full Syscon Flash ", true),
+            new SysconProcess((short)SYSCON_PROCESS.DUMP_PARTIAL, "Dump Partial Syscon Flash", true),
+            new SysconProcess((short)SYSCON_PROCESS.DUMP_NVS_SNVS, "Dump Syscon NVS/SNVS Only", true),
+            new SysconProcess((short)SYSCON_PROCESS.ERASE_FULL, "Erase Full Syscon Flash (Danger)", false),
+            new SysconProcess((short)SYSCON_PROCESS.ERASE_EXCEPT_BOOT0, "Erase Full Syscon Flash Expect Boot0 Block (Safe)", false),
+            new SysconProcess((short)SYSCON_PROCESS.ERASE_PARTIAL, "Erase Partial Syscon Flash", false),
+            new SysconProcess((short)SYSCON_PROCESS.ERASE_NVS_SNVS, "Erase Syscon NVS/SNVS Only", false),
+            new SysconProcess((short)SYSCON_PROCESS.WRITE_FULL, "Write Full Syscon Flash", true),
+            new SysconProcess((short)SYSCON_PROCESS.WRITE_PARTIAL, "Write Partial Syscon Flash", true),
+            new SysconProcess((short)SYSCON_PROCESS.WRITE_NVS_SNVS, "Write Syscon NVS/SNVS Only", true),
+            new SysconProcess((short)SYSCON_PROCESS.ENABLE_DEBUG_MODE, "Enable Syscon Debug Mode (Rewrite Boot0 Blocks)", true),
+            new SysconProcess((short)SYSCON_PROCESS.GET_DUMP_INFO, "Get Syscon Dump Info", true),
         };
 
         public enum SYSCON_COMMANDS
@@ -33,6 +104,7 @@ namespace PS4_Syscon_Tools
             SYSCON_CMD_ERASE_BLOCK,     // Erase block data
             SYSCON_CMD_ERASE_CHIP,      // Erase full chip data
             SYSCON_CMD_WRITE_BLOCK,     // Write block data
+            SYSCON_CMD_WRITE_BLOCK_EX,  // Extended Write block data
             SYSCON_CMD_SET_DATA = 0x0A, // Set data to be written into syscon write buffer
             SYSCON_CMD_INIT = 0x10,     // Initialize syscon
             SYSCON_CMD_UNINIT = 0x20,   // Uninitialize syscon
@@ -49,9 +121,12 @@ namespace PS4_Syscon_Tools
         public const int SYSCON_FLASH_START_BLOCK = 0;
         public const int SYSCON_FLASH_PARTIAL_START_BLOCK = 4;
         public const int SYSCON_FLASH_END_BLOCK = 511;
+        public const int SYSCON_FW_BLOCKS = 384;
+        public const int SYSCON_NVS_SNVS_BLOCKS = 128;
         public const int SYSCON_NVS_SNVS_START_BLOCK = 384;
         public const int SYSCON_NVS_SNVS_END_BLOCK = 511;
-        public const long SYSCON_NVS_SNVS_SIZE = 128 * SYSCON_BLOCK_SIZE;
+        public const long SYSCON_NVS_SNVS_SIZE = SYSCON_NVS_SNVS_BLOCKS * SYSCON_BLOCK_SIZE;
+        public const long SYSCON_FW_SIZE = SYSCON_FW_BLOCKS * SYSCON_BLOCK_SIZE;
         public const int SYSCON_DEBUG_SETTING_OFFSET = 0xC3;
 
         public const int SYSCON_OK = 0x00;
@@ -67,7 +142,7 @@ namespace PS4_Syscon_Tools
         //private SerialPort serialPort;
         private static bool bolFinished;
         private static bool bolReceiveError;
-        private static long lTimeout = 180000; //180000;
+        private static long lTimeout = 180000;
         private Stopwatch stopWatch;
         private bool isConnected = false;
         int response = 0;
@@ -371,7 +446,7 @@ namespace PS4_Syscon_Tools
 
                         dumpFile.Close();
 
-                        OnUpdateProcessEvent(new UpdateProcessEventArgs((int)iNoOfBlocks, "Dump Syscon Firmware Process Finsihed.."));
+                        OnUpdateProcessEvent(new UpdateProcessEventArgs((int)iNoOfBlocks, "Dump Syscon Firmware Process Finished.."));
                     }
                 }
 
@@ -448,7 +523,7 @@ namespace PS4_Syscon_Tools
 
                         dumpFile.Close();
 
-                        OnUpdateProcessEvent(new UpdateProcessEventArgs((int)SYSCON_FLASH_SIZE, "Dumping Syscon Firmware Process Finsihed Successfully.."));
+                        OnUpdateProcessEvent(new UpdateProcessEventArgs((int)SYSCON_FLASH_SIZE, "Dumping Syscon Firmware Process Finished Successfully.."));
                     }
 
                     iRet = 0;
@@ -484,8 +559,8 @@ namespace PS4_Syscon_Tools
 
             try
             {
-
                 byte[] startblockNo = BitConverter.GetBytes((short)startBlock);
+
                 if (BitConverter.IsLittleEndian)
                 {
                     Array.Reverse(startblockNo);
@@ -526,7 +601,7 @@ namespace PS4_Syscon_Tools
                     iBlockNo++;
                 }
 
-                OnUpdateProcessEvent(new UpdateProcessEventArgs((int)iNoOfBlocks, "Erase Partial Syscon FW Finsihed.."));
+                OnUpdateProcessEvent(new UpdateProcessEventArgs((int)iNoOfBlocks, "Erase Partial Syscon FW Finished.."));
                 iRet = 0;
 
             }
@@ -545,7 +620,7 @@ namespace PS4_Syscon_Tools
             return PS4SysconToolErase(SYSCON_FLASH_START_BLOCK, SYSCON_FLASH_END_BLOCK);
         }
 
-        public int PS4SysconToolWrite(byte[] buffer, int startBlock, int endBlock)
+        public int PS4SysconToolWrite(byte[] buffer, int startBlock, int endBlock, bool extendedMode = false)
         {
             int iRet = -1;
             int iWrittenData = 0;
@@ -599,9 +674,16 @@ namespace PS4_Syscon_Tools
 
                     OnUpdateProcessEvent(new UpdateProcessEventArgs(iCounter, String.Format("Writting Block No: {0:D03} At Address: 0x{1:X06}.", iBlockNo, iBlockNo * SYSCON_BLOCK_SIZE)));
 
+                    if (extendedMode)
+                    {
+                        serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_WRITE_BLOCK_EX, blockNo[0], blockNo[1] }, 0, 3); // syscon write command
+                    }
+                    else
+                    {
+                        serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_WRITE_BLOCK, blockNo[0], blockNo[1] }, 0, 3); // syscon write command
+                    }
 
-                    serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_WRITE_BLOCK, blockNo[0], blockNo[1] }, 0, 3); // syscon write command
-
+                    
                     serialPort.Write(buffer, iWrittenData, SYSCON_BLOCK_SIZE);
 
 
@@ -620,7 +702,7 @@ namespace PS4_Syscon_Tools
                     iCounter++;
                 }
 
-                OnUpdateProcessEvent(new UpdateProcessEventArgs(iNoOfBlocks, "Writting Syscon Firmware Process Finsihed Successfully!."));
+                OnUpdateProcessEvent(new UpdateProcessEventArgs(iNoOfBlocks, "Writting Syscon Firmware Process Finished Successfully!."));
                 iRet = 0;
             }
             catch (Exception ex)
@@ -632,7 +714,7 @@ namespace PS4_Syscon_Tools
             return iRet;
         }
 
-        public int PS4SysconToolWrite(string filePath, int startBlock, int endBlock)
+        public int PS4SysconToolWrite(string filePath, int startBlock, int endBlock, bool extendedMode = false)
         {
             int iRet = -1;
             int iNoOfBlocks = 0;
@@ -671,7 +753,6 @@ namespace PS4_Syscon_Tools
                     int startBlockAddress = startBlock * SYSCON_BLOCK_SIZE;
                     fwFile.Seek(startBlockAddress, SeekOrigin.Begin);
                     sysconFWBuffer = fwFileReader.ReadBytes(iWriteDataLen);
-
                     fwFileReader.Close();
                 }
 
@@ -680,7 +761,7 @@ namespace PS4_Syscon_Tools
 
             try
             {
-                iRet = PS4SysconToolWrite(sysconFWBuffer, startBlock, endBlock);
+                iRet = PS4SysconToolWrite(sysconFWBuffer, startBlock, endBlock, extendedMode);
             }
             catch (Exception ex)
             {
@@ -691,9 +772,9 @@ namespace PS4_Syscon_Tools
             return iRet;
         }
 
-        public int PS4SysconToolFullWrite(string filePath)
+        public int PS4SysconToolFullWrite(string filePath, bool extendedMode = false)
         {
-            return PS4SysconToolWrite(filePath, SYSCON_FLASH_START_BLOCK, SYSCON_FLASH_END_BLOCK);
+            return PS4SysconToolWrite(filePath, SYSCON_FLASH_START_BLOCK, SYSCON_FLASH_END_BLOCK, extendedMode);
         }
        
         public int PS4SysconToolEnableDebugMode() {
@@ -739,6 +820,83 @@ namespace PS4_Syscon_Tools
             OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Enabling Syscon Debug Mode Process Finished Successfully!!!.."));
 
             return iRet;
+        }
+
+        public PS4SysconInfo.PS4SysconFWInfo PS4SysconToolGetFWInfo(byte[] buffer)
+        {
+            PS4SysconInfo.PS4SysconFWInfo ps4SysconFwInfo = null;
+            byte[] sysconFWBuffer;
+
+            if (buffer == null || buffer.Length < PS4SysconTool.SYSCON_FW_SIZE) {
+                return null;
+            }
+
+            sysconFWBuffer = new byte[PS4SysconTool.SYSCON_FW_SIZE];
+
+            Array.Copy(buffer, sysconFWBuffer, PS4SysconTool.SYSCON_FW_SIZE);
+
+            ps4SysconFwInfo = PS4SysconInfo.GetPS4SysconFWInfo(sysconFWBuffer);
+            
+            return ps4SysconFwInfo;
+        }
+
+        public int PS4SysconToolGetFWInfo(string filePath) {
+            int iRet = -1;
+            byte[] sysconFWBuffer;
+
+            if (String.IsNullOrEmpty(filePath))
+            {
+                return -1;
+            }
+
+            if (!File.Exists(filePath))
+            {
+                return -2;
+            }
+
+            sysconFWBuffer = new byte[PS4SysconTool.SYSCON_FW_SIZE];
+
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Getting PS4 Syscon Dump Info:"));
+
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Loading PS4 Syscon Firmware File Into Memory."));
+
+            using (FileStream fwFile = new FileStream(filePath, FileMode.Open))
+            {
+                using (BinaryReader fwFileReader = new BinaryReader(fwFile))
+                {
+                    sysconFWBuffer = fwFileReader.ReadBytes(sysconFWBuffer.Length);
+
+                    fwFileReader.Close();
+                }
+
+                fwFile.Close();
+            }
+
+            try
+            {
+                PS4SysconInfo.PS4SysconFWInfo ps4SysconInfo = PS4SysconInfo.GetPS4SysconFWInfo(sysconFWBuffer);
+                if (ps4SysconInfo != null)
+                {
+                    OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "PS4 Firmware Dump Info:"));
+                    OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, String.Format("Firmware Version: {0}", ps4SysconInfo.version)));
+                    OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, String.Format("Firmware Hash:    {0}", ps4SysconInfo.hash)));
+                    OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, String.Format("Firmware Magic:   {0}", (ps4SysconInfo.magic == true? "True" : "False"))));
+                    OnUpdateProcessEvent(new UpdateProcessEventArgs(1,  String.Format("Debug Mode:       {0}", (ps4SysconInfo.debugMode == PS4SysconInfo.SYSCON_DEBUG_MODES.NONE ? "Disabled" : "Enabled"))));
+                    iRet = 0;
+                }
+                else
+                {
+                    iRet = -3;
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+
+            return iRet;
+
         }
 
         protected virtual void OnUpdateProcessEvent(UpdateProcessEventArgs e)

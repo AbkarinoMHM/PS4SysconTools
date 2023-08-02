@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace PS4_Syscon_Tools
 {
@@ -23,18 +24,14 @@ namespace PS4_Syscon_Tools
             return true;
         }
 
-        public static bool isFilesIdentical(string file1Path, string file2Path) {
-            byte[] buffer1;
-            byte[] buffer2;
-
-            if (!File.Exists(file1Path) || !File.Exists(file2Path)) {
+        public static bool IsByteArrayIdentical(byte[] buffer1, byte[] buffer2)
+        {
+            if (buffer1 == null || buffer2 == null) {
                 return false;
             }
 
-            buffer1 = File.ReadAllBytes(file1Path);
-            buffer2 = File.ReadAllBytes(file2Path);
-
-            if (buffer1.Length != buffer2.Length) {
+            if (buffer1.Length != buffer2.Length)
+            {
                 return false;
             }
 
@@ -50,6 +47,85 @@ namespace PS4_Syscon_Tools
                 totalProcessed += sizeof(ulong);
             }
             return true;
+        }
+
+        public static bool IsFilesIdentical(string file1Path, string file2Path)
+        {
+            byte[] buffer1;
+            byte[] buffer2;
+
+            if (!File.Exists(file1Path) || !File.Exists(file2Path))
+            {
+                return false;
+            }
+
+            buffer1 = File.ReadAllBytes(file1Path);
+            buffer2 = File.ReadAllBytes(file2Path);
+
+            return IsByteArrayIdentical(buffer1, buffer2);
+        }
+
+        public static string ByteArrayToString(byte[] ba)
+        {
+            return BitConverter.ToString(ba).Replace("-", "");
+        }
+
+        public static byte[] StringToByteArray(String hex)
+        {
+            int NumberChars = hex.Length;
+            byte[] bytes = new byte[NumberChars / 2];
+            for (int i = 0; i < NumberChars; i += 2)
+                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+            return bytes;
+        }
+
+        public static int LoadFile(string filePath, int startBlock, int endBlock, out byte[] buffer) {
+            int iNoOfBlocks = 0;
+
+            if (String.IsNullOrEmpty(filePath))
+            {
+                buffer = null;
+                return -1;
+            }
+
+            if (!File.Exists(filePath))
+            {
+                buffer = null;
+                return -2;
+            }
+
+            if (startBlock > endBlock)
+            {
+                buffer = null;
+                return -3;
+            }
+
+            iNoOfBlocks = (endBlock - startBlock) + 1;
+
+            buffer = new byte[iNoOfBlocks * PS4SysconTool.SYSCON_BLOCK_SIZE];
+
+            try
+            {
+                using (FileStream fwFile = new FileStream(filePath, FileMode.Open))
+                {
+                    using (BinaryReader fwFileReader = new BinaryReader(fwFile))
+                    {
+                        int startBlockAddress = startBlock * PS4SysconTool.SYSCON_BLOCK_SIZE;
+                        fwFile.Seek(startBlockAddress, SeekOrigin.Begin);
+                        buffer = fwFileReader.ReadBytes(buffer.Length);
+                        fwFileReader.Close();
+                    }
+
+                    fwFile.Close();
+                }
+            }
+            catch (Exception ex)
+            {
+                buffer = null;
+                return -4;
+            }
+           
+            return 0;
         }
 
     }
