@@ -148,6 +148,8 @@ namespace PS4_Syscon_Tools
                     btnScan.Enabled = true;
 
                     cboCOMPorts.Enabled = true;
+                    prbProgress.Value = 0;
+                    txtLog.Clear();
                 }
             }
 
@@ -375,6 +377,7 @@ namespace PS4_Syscon_Tools
 
         private void btnStart_Click(object sender, EventArgs e)
         {
+            byte[] sysconFWBuffer = new byte[] { };
             grbDeviceConnection.Enabled = false;
             grbProcess.Enabled = false;
             btnStart.Enabled = false;
@@ -440,16 +443,84 @@ namespace PS4_Syscon_Tools
                         noOfBlocks = (short)(endBlock - startBlock + 1);
                         prbProgress.Maximum = noOfBlocks;
 
-                        iRet = ps4SysconTool.PS4SysconToolDump(sysconFWFilePath, startBlock, endBlock);
+                        noOfDumps = (short)nudNoOfDumps.Value;
+
+                        if (noOfDumps > 1)
+                        {
+                            string sysconFWFile1 = Path.Combine(Path.GetDirectoryName(sysconFWFilePath),
+                                String.Format("{0}-01{1}", Path.GetFileNameWithoutExtension(sysconFWFilePath),
+                                    Path.GetExtension(sysconFWFilePath)));
+
+                            string sysconFWFile2 = Path.Combine(Path.GetDirectoryName(sysconFWFilePath),
+                                String.Format("{0}-02{1}", Path.GetFileNameWithoutExtension(sysconFWFilePath),
+                                    Path.GetExtension(sysconFWFilePath)));
+
+                            txtInputOutputFile.Text = sysconFWFile1;
+
+                            iRet = ps4SysconTool.PS4SysconToolDump(sysconFWFile1, startBlock, endBlock);
+                            if (iRet != 0)
+                            {
+                                break;
+                            }
+
+                            txtInputOutputFile.Text = sysconFWFile2;
+
+                            iRet = ps4SysconTool.PS4SysconToolDump(sysconFWFile2, startBlock, endBlock);
+                            if (iRet != 0)
+                            {
+                                break;
+                            }
+
+                            isFilesAreIdentical = Util.IsFilesIdentical(sysconFWFile1, sysconFWFile2);
+                        }
+                        else
+                        {
+                            iRet = ps4SysconTool.PS4SysconToolDump(sysconFWFilePath, startBlock, endBlock);
+                        }
+
                         break;
                     case PS4SysconTool.SYSCON_PROCESS.DUMP_NVS_SNVS:
                         sysconFWFilePath = txtInputOutputFile.Text;
-                        startBlock = (short)nudStartBlock.Value;
-                        endBlock = (short)nudEndBlock.Value;
-                        noOfBlocks = (short)(endBlock - startBlock + 1);
-                        prbProgress.Maximum = noOfBlocks;
+                        startBlock = PS4SysconTool.SYSCON_NVS_SNVS_START_BLOCK;
+                        endBlock = PS4SysconTool.SYSCON_NVS_SNVS_END_BLOCK;
+                        noOfBlocks = PS4SysconTool.SYSCON_NVS_SNVS_BLOCKS;
+                        prbProgress.Maximum = PS4SysconTool.SYSCON_NVS_SNVS_BLOCKS;
 
-                        iRet = ps4SysconTool.PS4SysconToolNVSSNVSDump(sysconFWFilePath);
+                        noOfDumps = (short)nudNoOfDumps.Value;
+
+                        if (noOfDumps > 1)
+                        {
+                            string sysconFWFile1 = Path.Combine(Path.GetDirectoryName(sysconFWFilePath),
+                                String.Format("{0}-01{1}", Path.GetFileNameWithoutExtension(sysconFWFilePath),
+                                    Path.GetExtension(sysconFWFilePath)));
+
+                            string sysconFWFile2 = Path.Combine(Path.GetDirectoryName(sysconFWFilePath),
+                                String.Format("{0}-02{1}", Path.GetFileNameWithoutExtension(sysconFWFilePath),
+                                    Path.GetExtension(sysconFWFilePath)));
+
+                            txtInputOutputFile.Text = sysconFWFile1;
+
+                            iRet = ps4SysconTool.PS4SysconToolNVSSNVSDump(sysconFWFile1);
+                            if (iRet != 0)
+                            {
+                                break;
+                            }
+
+                            txtInputOutputFile.Text = sysconFWFile2;
+
+                            iRet = ps4SysconTool.PS4SysconToolNVSSNVSDump(sysconFWFile2);
+                            if (iRet != 0)
+                            {
+                                break;
+                            }
+
+                            isFilesAreIdentical = Util.IsFilesIdentical(sysconFWFile1, sysconFWFile2);
+                        }
+                        else
+                        {
+                            iRet = ps4SysconTool.PS4SysconToolNVSSNVSDump(sysconFWFilePath);
+                        }
+
                         break;
                     case PS4SysconTool.SYSCON_PROCESS.ERASE_FULL:
                         if (nudStartBlock.Value < dangBlock)
@@ -491,8 +562,6 @@ namespace PS4_Syscon_Tools
                         iRet = ps4SysconTool.PS4SysconToolErase(startBlock, endBlock);
                         break;
                     case PS4SysconTool.SYSCON_PROCESS.WRITE_FULL:
-                        byte[] sysconFWBuffer = new byte[PS4SysconTool.SYSCON_FLASH_SIZE];
-
                         if (nudStartBlock.Value < dangBlock)
                         {
                             DialogResult result = MessageBox.Show("You Are About To Erase/Rewrite a Dangerous Area That Can Lead To Bricking Your Syscon Chip.\n Do You Want To Continue ?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
@@ -509,6 +578,8 @@ namespace PS4_Syscon_Tools
                         enableDebugMode = chkEnableDebugMode.Checked;
 
                         prbProgress.Maximum = (int)PS4SysconTool.SYSCON_BLOCKS_NO;
+
+                        sysconFWBuffer = new byte[PS4SysconTool.SYSCON_FLASH_SIZE];
 
                         iRet = Util.LoadFile(sysconFWFilePath, PS4SysconTool.SYSCON_FLASH_START_BLOCK, PS4SysconTool.SYSCON_FLASH_END_BLOCK, out sysconFWBuffer);
                         if (iRet != 0) {
@@ -583,19 +654,96 @@ namespace PS4_Syscon_Tools
                         enableAutoErase = chkAutoErase.Checked;
                         enableDebugMode = chkEnableDebugMode.Checked;
 
-                        iRet = ps4SysconTool.PS4SysconToolWrite(sysconFWFilePath, startBlock, endBlock, enableAutoErase);
+                        sysconFWBuffer = new byte[noOfBlocks * PS4SysconTool.SYSCON_BLOCK_SIZE];
+
+                        iRet = Util.LoadFile(sysconFWFilePath, startBlock, endBlock, out sysconFWBuffer);
+                        if (iRet != 0)
+                        {
+                            MessageBox.Show("Error Loading Syscon Firmware File.\nPlease Select a Correct File Then Try Again.",
+                                "Error Loading Syscon Dump.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            iRet = -1;
+                            break;
+                        }
+
+                        iRet = ps4SysconTool.PS4SysconToolWrite(sysconFWBuffer, startBlock, endBlock, enableAutoErase);
+                        if (iRet != 0)
+                        {
+                            /// todo: to add error message here
+                            break;
+                        }
+
+                        if (enableAutoVerify)
+                        {
+                            byte[] dumpBuffer = new byte[noOfBlocks * PS4SysconTool.SYSCON_BLOCK_SIZE];
+                            iRet = ps4SysconTool.PS4SysconToolDump(out dumpBuffer, startBlock, endBlock);
+                            if (iRet != 0)
+                            {
+                                isFilesAreIdentical = false;
+                                /// todo: to add error message here
+                                break;
+                            }
+
+                            isFilesAreIdentical = Util.IsByteArrayIdentical(dumpBuffer, sysconFWBuffer);
+
+                        }
+
                         break;
 
                     case PS4SysconTool.SYSCON_PROCESS.WRITE_NVS_SNVS:
                         sysconFWFilePath = txtInputOutputFile.Text;
-                        startBlock = (short)nudStartBlock.Value;
-                        endBlock = (short)nudEndBlock.Value;
-                        noOfBlocks = (short)(endBlock - startBlock + 1);
-                        prbProgress.Maximum = noOfBlocks;
+                        startBlock = PS4SysconTool.SYSCON_NVS_SNVS_START_BLOCK;
+                        endBlock = PS4SysconTool.SYSCON_NVS_SNVS_END_BLOCK;
+                        noOfBlocks = PS4SysconTool.SYSCON_NVS_SNVS_BLOCKS;
+                        prbProgress.Maximum = PS4SysconTool.SYSCON_NVS_SNVS_BLOCKS;
 
                         enableAutoErase = chkAutoErase.Checked;
 
-                        iRet = ps4SysconTool.PS4SysconToolWrite(sysconFWFilePath, startBlock, endBlock, enableAutoErase);
+                        sysconFWBuffer = new byte[PS4SysconTool.SYSCON_NVS_SNVS_SIZE];
+
+                        // detect file type automatically (full dump/snvs-nvs dump).
+                        FileInfo dumpFileSize = new FileInfo(sysconFWFilePath);
+                        if (dumpFileSize.Exists && (dumpFileSize.Length == PS4SysconTool.SYSCON_FLASH_SIZE)) {   // full dump.
+                            iRet = Util.LoadFile(sysconFWFilePath, PS4SysconTool.SYSCON_NVS_SNVS_START_BLOCK, PS4SysconTool.SYSCON_NVS_SNVS_END_BLOCK, out sysconFWBuffer);
+                        } else if (dumpFileSize.Exists && (dumpFileSize.Length == PS4SysconTool.SYSCON_NVS_SNVS_SIZE)) {     // snvs-nvs dump.
+                            iRet = Util.LoadFile(sysconFWFilePath, 0, PS4SysconTool.SYSCON_NVS_SNVS_BLOCKS - 1, out sysconFWBuffer);
+                        } else {
+                            MessageBox.Show("Error Loading Syscon SNVS/NVS Dump File.\nYou Must Select Eiher Full Syscon Dump Or NVS/SNVS Dump only.\nPlease Select a Correct File Then Try Again.",
+                                                            "Error Loading Syscon SNVS/NVS Dump.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            iRet = -1;
+                            break;
+                        }
+
+                        
+                        if (iRet != 0)
+                        {
+                            MessageBox.Show("Error Loading Syscon SNVS/NVS Dump File.\nPlease Select a Correct File Then Try Again.",
+                                "Error Loading Syscon SNVS/NVS Dump.", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            iRet = -1;
+                            break;
+                        }
+
+                        iRet = ps4SysconTool.PS4SysconToolWrite(sysconFWBuffer, startBlock, endBlock, enableAutoErase);
+                        if (iRet != 0)
+                        {
+                            /// todo: to add error message here
+                            break;
+                        }
+
+                        if (enableAutoVerify)
+                        {
+                            byte[] dumpBuffer = new byte[PS4SysconTool.SYSCON_NVS_SNVS_SIZE];
+                            iRet = ps4SysconTool.PS4SysconToolDump(out dumpBuffer, startBlock, endBlock);
+                            if (iRet != 0)
+                            {
+                                isFilesAreIdentical = false;
+                                /// todo: to add error message here
+                                break;
+                            }
+
+                            isFilesAreIdentical = Util.IsByteArrayIdentical(dumpBuffer, sysconFWBuffer);
+
+                        }
+
                         break;
                     case PS4SysconTool.SYSCON_PROCESS.ENABLE_DEBUG_MODE:
                         prbProgress.Maximum = 3;
