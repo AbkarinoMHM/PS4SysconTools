@@ -83,13 +83,13 @@ namespace PS4_Syscon_Tools
             }
 
             //check magic values 2
-            if (String.Compare(BitConverter.ToString(fwData, 0xC4, 0x0A), ":Not:Used:") != 0) {
+            if (String.Compare(Encoding.UTF8.GetString(fwData, 0xC4, 0x0A), ":Not:Used:") != 0) {
                 sysconFWInfo.magic = false;
                 return sysconFWInfo;
             }
 
             //check magic values 3
-            if (String.Compare(BitConverter.ToString(fwData, 0x133, 0x20), "Sony Computer Entertainment Inc.") != 0)
+            if (String.Compare(Encoding.UTF8.GetString(fwData, 0x133, 0x20), "Sony Computer Entertainment Inc.") != 0)
             {
                 sysconFWInfo.magic = false;
                 return sysconFWInfo;
@@ -112,6 +112,7 @@ namespace PS4_Syscon_Tools
                 {
                     if (string.Compare(hashValue, fwInfo.hash, true) == 0) {
                         sysconFWInfo = new PS4SysconFWInfo(fwInfo.version, fwInfo.hash, fwInfo.debugMode);
+                        break;
                     }
                 }
             }

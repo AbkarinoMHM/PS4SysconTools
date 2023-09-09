@@ -142,7 +142,7 @@ namespace PS4_Syscon_Tools
         //private SerialPort serialPort;
         private static bool bolFinished;
         private static bool bolReceiveError;
-        private static long lTimeout = 180000;
+        private static long lTimeout = 10000;
         private Stopwatch stopWatch;
         private bool isConnected = false;
         int response = 0;
@@ -279,14 +279,14 @@ namespace PS4_Syscon_Tools
             {
                 stopWatch = new Stopwatch();
 
+                OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Disconnecting from PS4 Syscon Tool."));
+
                 if (!serialPort.IsOpen)
                 {
                     debugMode = false;
                     isConnected = false;
                     return 0;
                 }
-
-                OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Disconnecting from PS4 Syscon Tool."));
 
                 serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_UNINIT }, 0, 1);   // uninit command
 
@@ -330,7 +330,7 @@ namespace PS4_Syscon_Tools
 
         public int PS4SysconToolDump(out byte[] buffer, int startBlock, int endBlock) {
             int iRet = -1;
-            int iBlockNo = 0;
+            int iBlockNo = 1;
             int iNoOfBlocks = 0;
             int iReadedData = 0;
             byte[] sysconBuffer;
@@ -400,6 +400,8 @@ namespace PS4_Syscon_Tools
 
                     iRet = 0;
 
+                    OnUpdateProcessEvent(new UpdateProcessEventArgs((int)iNoOfBlocks, "Dump Syscon Firmware Process Finished.."));
+
                 }
                 else
                 {
@@ -446,7 +448,7 @@ namespace PS4_Syscon_Tools
 
                         dumpFile.Close();
 
-                        OnUpdateProcessEvent(new UpdateProcessEventArgs((int)iNoOfBlocks, "Dump Syscon Firmware Process Finished.."));
+                        //OnUpdateProcessEvent(new UpdateProcessEventArgs((int)iNoOfBlocks, "Dump Syscon Firmware Process Finished.."));
                     }
                 }
 
@@ -480,11 +482,17 @@ namespace PS4_Syscon_Tools
                     return -2;
                 }
 
+                stopWatch = new Stopwatch();
+
                 serialPort.DiscardInBuffer();
                 serialPort.DiscardOutBuffer();
 
                 // write syscon full dump command 0x03
                 serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_READ_CHIP }, 0, 1);
+
+                stopWatch.Reset();
+
+                stopWatch.Start();
 
                 iBlockNo = 0;
 
@@ -493,8 +501,9 @@ namespace PS4_Syscon_Tools
 
                     OnUpdateProcessEvent(new UpdateProcessEventArgs(iReadedData, String.Format("Dumping Block No: {0:D03} At Address: 0x{1:X06}.", iBlockNo, iReadedData)));
 
-                    while (serialPort.BytesToRead < SYSCON_BLOCK_SIZE)
+                    while ((serialPort.BytesToRead < SYSCON_BLOCK_SIZE))
                     {
+                        //System.Threading.Thread.Sleep(100);
                     }
 
 
