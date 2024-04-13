@@ -9,6 +9,10 @@ namespace PS4_Syscon_Tools
 {
     class PS4SysconInfo
     {
+
+        const string PS4_SYSCON_FLASHER_VID = "16C0";
+        const string PS4_SYSCON_FLASHER_PID = "0483";
+
         public enum SYSCON_DEBUG_MODES {
             NONE = 0x04,
             DEBUG_84 = 0x84,

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.IO.Ports;
+
 //using System.IO.Ports;
 using RJCP.IO.Ports;
 
@@ -8,9 +10,53 @@ namespace PS4_Syscon_Tools
 {
     class PS4SysconTool
     {
+
+        public const string PS4_SYSCON_FLASHER_VID = "16C0";
+        public const string PS4_SYSCON_FLASHER_PID = "0483";
+
+        public const int SYSCON_BLOCK_SIZE = 0x400;
+        public const int SYSCON_BUFFER_SIZE = 0x80;
+        public const int SYSCON_WRITE_BUFFER_SIZE = 0x100;
+        public const int SYSCON_SERIAL_BUFFER_SIZE = 0x400;
+        public const int SYSCON_BLOCKS_NO = 0x200;
+        public const long SYSCON_FLASH_SIZE = SYSCON_BLOCK_SIZE * SYSCON_BLOCKS_NO;
+        public const int SYSCON_BOOT0_BLOCKS = 4;
+        public const int SYSCON_FLASH_START_BLOCK = 0;
+        public const int SYSCON_FLASH_PARTIAL_START_BLOCK = 4;
+        public const int SYSCON_FLASH_END_BLOCK = 511;
+        public const int SYSCON_FW_BLOCKS = 384;
+        public const int SYSCON_NVS_SNVS_BLOCKS = 128;
+        public const int SYSCON_NVS_SNVS_START_BLOCK = 384;
+        public const int SYSCON_NVS_SNVS_END_BLOCK = 511;
+        public const long SYSCON_NVS_SNVS_SIZE = SYSCON_NVS_SNVS_BLOCKS * SYSCON_BLOCK_SIZE;
+        public const long SYSCON_FW_SIZE = SYSCON_FW_BLOCKS * SYSCON_BLOCK_SIZE;
+        public const int SYSCON_DEBUG_SETTING_OFFSET = 0xC3;
+
+        public const int SYSCON_OK = 0x00;
+        public const int SYSCON_ERR_INT = 0xF0;
+        public const int SYSCON_ERR_READ = 0xF1;
+        public const int SYSCON_ERR_ERSASE = 0xF4;
+        public const int SYSCON_ERR_WRITE = 0xF6;
+        public const int SYSCON_ERR_CMD_LEN = 0xFA;
+        public const int SYSCON_ERR_CMD_EXEC = 0xFE;
+        public const int SYSCON_ERR = 0xFF;
+
+        public static bool isDebugMode = false;
+        private static bool isConnected = false;
+
+        private SerialPortStream serialPort;
+        //private SerialPort serialPort;
+        private static bool bolFinished;
+        private static bool bolReceiveError;
+        private static long lTimeout = 10000;
+        private Stopwatch stopWatch;
+        
+        int response = 0;
+        byte bRet;
+
         public enum SYSCON_PROCESS {
-            NONE = -1,
-            DUMP_FULL = 0,          // Dump Full Syscon Flash
+            GET_DUMP_INFO,          // Get Syscon Dump Info
+            DUMP_FULL,              // Dump Full Syscon Flash
             DUMP_PARTIAL,           // Dump Partial Syscon Flash
             DUMP_NVS_SNVS,          // Dump Syscon NVS/SNVS Only
             ERASE_FULL,             // Erase Full Syscon Flash (Danger)
@@ -21,7 +67,6 @@ namespace PS4_Syscon_Tools
             WRITE_PARTIAL,          // Write Partial Syscon Flash
             WRITE_NVS_SNVS,         // Write Syscon NVS/SNVS Only
             ENABLE_DEBUG_MODE,      // Enable Syscon Debug Mode (ReWrite Boot0 Blocks)
-            GET_DUMP_INFO           // Get Syscon Dump Info
         };
 
         public class SysconProcess
@@ -76,23 +121,21 @@ namespace PS4_Syscon_Tools
                 this.Enabled = enabled;
             }
 
-
         };
 
         public static SysconProcess[] PS4SysconProcess = {
-            new SysconProcess((short)SYSCON_PROCESS.NONE, null, false),
+            new SysconProcess((short)SYSCON_PROCESS.GET_DUMP_INFO, "Get Syscon Dump Info", true),
             new SysconProcess((short)SYSCON_PROCESS.DUMP_FULL, "Dump Full Syscon Flash ", true),
-            new SysconProcess((short)SYSCON_PROCESS.DUMP_PARTIAL, "Dump Partial Syscon Flash", true),
-            new SysconProcess((short)SYSCON_PROCESS.DUMP_NVS_SNVS, "Dump Syscon NVS/SNVS Only", true),
+            new SysconProcess((short)SYSCON_PROCESS.DUMP_PARTIAL, "Dump Partial Syscon Flash", false),
+            new SysconProcess((short)SYSCON_PROCESS.DUMP_NVS_SNVS, "Dump Syscon NVS/SNVS Only", false),
             new SysconProcess((short)SYSCON_PROCESS.ERASE_FULL, "Erase Full Syscon Flash (Danger)", false),
             new SysconProcess((short)SYSCON_PROCESS.ERASE_EXCEPT_BOOT0, "Erase Full Syscon Flash Expect Boot0 Block (Safe)", false),
             new SysconProcess((short)SYSCON_PROCESS.ERASE_PARTIAL, "Erase Partial Syscon Flash", false),
             new SysconProcess((short)SYSCON_PROCESS.ERASE_NVS_SNVS, "Erase Syscon NVS/SNVS Only", false),
             new SysconProcess((short)SYSCON_PROCESS.WRITE_FULL, "Write Full Syscon Flash", true),
-            new SysconProcess((short)SYSCON_PROCESS.WRITE_PARTIAL, "Write Partial Syscon Flash", true),
-            new SysconProcess((short)SYSCON_PROCESS.WRITE_NVS_SNVS, "Write Syscon NVS/SNVS Only", true),
+            new SysconProcess((short)SYSCON_PROCESS.WRITE_PARTIAL, "Write Partial Syscon Flash", false),
+            new SysconProcess((short)SYSCON_PROCESS.WRITE_NVS_SNVS, "Write Syscon NVS/SNVS Only", false),
             new SysconProcess((short)SYSCON_PROCESS.ENABLE_DEBUG_MODE, "Enable Syscon Debug Mode (Rewrite Boot0 Blocks)", true),
-            new SysconProcess((short)SYSCON_PROCESS.GET_DUMP_INFO, "Get Syscon Dump Info", true),
         };
 
         public enum SYSCON_COMMANDS
@@ -111,51 +154,152 @@ namespace PS4_Syscon_Tools
             SYSCON_CMD_RESET = 0x80     // Reset syscon tool
         };
 
-        public const int SYSCON_BLOCK_SIZE = 0x400;
-        public const int SYSCON_BUFFER_SIZE = 0x40;
-        public const int SYSCON_WRITE_BUFFER_SIZE = 0x100;
-        public const int SYSCON_SERIAL_BUFFER_SIZE = 0x400;
-        public const int SYSCON_BLOCKS_NO = 0x200;
-        public const long SYSCON_FLASH_SIZE = SYSCON_BLOCK_SIZE * SYSCON_BLOCKS_NO;
-        public const int SYSCON_BOOT0_BLOCKS = 4;
-        public const int SYSCON_FLASH_START_BLOCK = 0;
-        public const int SYSCON_FLASH_PARTIAL_START_BLOCK = 4;
-        public const int SYSCON_FLASH_END_BLOCK = 511;
-        public const int SYSCON_FW_BLOCKS = 384;
-        public const int SYSCON_NVS_SNVS_BLOCKS = 128;
-        public const int SYSCON_NVS_SNVS_START_BLOCK = 384;
-        public const int SYSCON_NVS_SNVS_END_BLOCK = 511;
-        public const long SYSCON_NVS_SNVS_SIZE = SYSCON_NVS_SNVS_BLOCKS * SYSCON_BLOCK_SIZE;
-        public const long SYSCON_FW_SIZE = SYSCON_FW_BLOCKS * SYSCON_BLOCK_SIZE;
-        public const int SYSCON_DEBUG_SETTING_OFFSET = 0xC3;
-
-        public const int SYSCON_OK = 0x00;
-        public const int SYSCON_ERR_INT = 0xF0;
-        public const int SYSCON_ERR_READ = 0xF1;
-        public const int SYSCON_ERR_ERSASE = 0xF4;
-        public const int SYSCON_ERR_WRITE = 0xF6;
-        public const int SYSCON_ERR_CMD_LEN = 0xFA;
-        public const int SYSCON_ERR_CMD_EXEC = 0xFE;
-        public const int SYSCON_ERR = 0xFF;
-
-        private SerialPortStream serialPort;
-        //private SerialPort serialPort;
-        private static bool bolFinished;
-        private static bool bolReceiveError;
-        private static long lTimeout = 10000;
-        private Stopwatch stopWatch;
-        private bool isConnected = false;
-        int response = 0;
-        byte bRet;
 
         // Declare the event using EventHandler<T>
         public event EventHandler<UpdateProcessEventArgs> UpdateProcessEvent;
 
-        public int PS4SysconToolConnect(string port, out string version, out string freeMemory, out bool debugMode) {
-            int iRet = -1;
+        public bool PS4SysconToolConnect(string port) {
+            byte[] buffer = new byte[1024];
+
+            int recievedDataLen = 0;
+
+            bolFinished = false;
+
+            //if (isConnected)
+            //{
+            //    return true;
+            //}
+
+            try
+            {
+                serialPort = new SerialPortStream(port, 115200, 8, RJCP.IO.Ports.Parity.None, RJCP.IO.Ports.StopBits.One);
+                //serialPort = new SerialPort(port, 115200, Parity.None, 8, StopBits.One);
+
+                serialPort.Open();
+                serialPort.DiscardOutBuffer();
+                serialPort.DiscardInBuffer();
+
+                if (!serialPort.IsOpen)
+                {
+                    isConnected = false;
+                    return false;
+                }
+
+                OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Connecting To PS4 Syscon Tool."));
+
+                serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_PING, (byte)SYSCON_COMMANDS.SYSCON_CMD_INFO }, 0, 2);   // get version command
+
+                while (serialPort.BytesToRead < 4)
+                {
+                    System.Threading.Thread.Sleep(10);
+                }
+
+                recievedDataLen = serialPort.Read(buffer, 0, 4);
+                if (recievedDataLen > 0)
+                {
+                    OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Connected To PS4 Syscon Tool Successfuly."));
+
+                    isConnected = true;
+                }
+                else
+                {
+                    isConnected = false;
+                    return false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool PS4SysconToolConnect(string port, out string version, out string freeMemory)
+        {
             string toolVersion = string.Empty;
             string freeMemorySize = string.Empty;
-            bool isDebugMode = false;
+            byte[] buffer = new byte[1024];
+
+            int recievedDataLen = 0;
+
+            bolFinished = false;
+
+
+            version = string.Empty;
+            freeMemory = string.Empty;
+
+            //if (isConnected)
+            //{
+            //    return true;
+            //}
+
+            try
+            {
+                serialPort = new SerialPortStream(port, 115200, 8, RJCP.IO.Ports.Parity.None, RJCP.IO.Ports.StopBits.One);
+                //serialPort = new SerialPort(port, 115200, Parity.None, 8, StopBits.One);
+
+                serialPort.Open();
+                serialPort.DiscardOutBuffer();
+                serialPort.DiscardInBuffer();
+
+                if (!serialPort.IsOpen)
+                {
+                    version = string.Empty;
+                    freeMemory = string.Empty;
+                    isConnected = false;
+                    return false;
+                }
+
+                OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "PS4 Syscon Tool Started."));
+
+                OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Connecting To PS4 Syscon Tool."));
+
+                serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_PING, (byte)SYSCON_COMMANDS.SYSCON_CMD_INFO }, 0, 2);   // get version command
+
+                while (serialPort.BytesToRead < 4)
+                {
+                    System.Threading.Thread.Sleep(10);
+                }
+
+                recievedDataLen = serialPort.Read(buffer, 0, 4);
+                if (recievedDataLen > 0)
+                {
+                    OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Connected To PS4 Syscon Tool Successfuly."));
+
+                    toolVersion = String.Format("{0:X02}.{1:X02}", buffer[0], buffer[1]);
+                    freeMemorySize = String.Format("{0}", ((buffer[2] << 8) | buffer[3]));
+
+                    isConnected = true;
+
+                    OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, String.Format("PS4 Syscon Tool Version: {0} - Free Memory: {1} bytes.", toolVersion, freeMemorySize)));
+                }
+                else
+                {
+                    isConnected = false;
+                    return false;
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+            finally
+            {
+                //serialPort.Close();
+                version = toolVersion;
+                freeMemory = freeMemorySize;
+            }
+
+            return true;
+        }
+
+        public int PS4SysconToolConnect(string port, out string version, out string freeMemory, out bool debugMode, bool init = true) {
+            int iRet = -1;
+            string toolVersion = string.Empty;
+            string freeMemorySize = string.Empty;            
             byte[] buffer = new byte[1024];
             
             int recievedDataLen = 0;
@@ -173,7 +317,7 @@ namespace PS4_Syscon_Tools
 
             try
             {
-                stopWatch = new Stopwatch();
+                //stopWatch = new Stopwatch();
 
                 serialPort = new SerialPortStream(port, 115200, 8, RJCP.IO.Ports.Parity.None, RJCP.IO.Ports.StopBits.One);
                 //serialPort = new SerialPort(port, 115200, Parity.None, 8, StopBits.One);
@@ -197,9 +341,9 @@ namespace PS4_Syscon_Tools
 
                 serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_PING, (byte)SYSCON_COMMANDS.SYSCON_CMD_INFO }, 0, 2);   // get version command
 
-                stopWatch.Reset();
+                //stopWatch.Reset();
 
-                stopWatch.Start();
+                //stopWatch.Start();
 
                 while (serialPort.BytesToRead < 4)
                 {
@@ -214,7 +358,16 @@ namespace PS4_Syscon_Tools
                     toolVersion = String.Format("{0:X02}.{1:X02}", buffer[0], buffer[1]);
                     freeMemorySize = String.Format("{0}", ((buffer[2] << 8) | buffer[3]));
 
+                    isConnected = true;
+
                     OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, String.Format("PS4 Syscon Tool Version: {0} - Free Memory: {1} bytes.", toolVersion, freeMemorySize)));
+                }
+                else 
+                {
+                    isConnected = false;
+                }
+
+                if (isConnected && init) {
 
                     OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Trying to Enter PS4 Syscon Debug Mode."));
 
@@ -230,19 +383,19 @@ namespace PS4_Syscon_Tools
                     if (response == 0x00)
                     {
                         isDebugMode = true;
-                        isConnected = true;
                         bolFinished = true;
                         iRet = 0;
                     }
                     else
                     {
                         isDebugMode = false;
-                        isConnected = false;
                         bolFinished = true;
                         iRet = -1;
                         serialPort.Close();
                     }
+
                 }
+
             }
             catch (Exception ex)
             {
@@ -262,6 +415,61 @@ namespace PS4_Syscon_Tools
             return iRet;
         }
 
+        public bool PS4SysconToolInit() 
+        {
+            try {
+                OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Trying to Enter PS4 Syscon OCD Mode."));
+
+                // send enter debug mode command
+                serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_INIT }, 0, 1);
+
+                while (serialPort.BytesToRead < 1)
+                {
+                    System.Threading.Thread.Sleep(10);
+                }
+
+                response = serialPort.ReadByte();
+                if (response == 0x00)
+                {
+                    isDebugMode = true;
+                    OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Entered PS4 Syscon OCD Mode Successfully."));
+                }
+                else
+                {
+                    isDebugMode = false;
+                    OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Error Entering PS4 Syscon OCD Mode."));
+                }
+            } 
+            catch (Exception ex)
+            {
+                isDebugMode = false;
+            }
+
+            return isDebugMode;
+        }
+
+        public bool PS4SysconToolReset()
+        {
+            try
+            {
+                OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Resetting PS4 Syscon Flasher."));
+
+                // send enter debug mode command
+                serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_RESET }, 0, 1);
+
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+
+            serialPort.Close();
+            isConnected = false;
+            isDebugMode = false;
+
+            return true;
+        }
+
         public int PS4SysconToolDisconnect(string port, out bool debugMode) {
             int iRet = -1;
             bool isDebugMode = false;
@@ -277,7 +485,7 @@ namespace PS4_Syscon_Tools
 
             try
             {
-                stopWatch = new Stopwatch();
+                //stopWatch = new Stopwatch();
 
                 OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Disconnecting from PS4 Syscon Tool."));
 
@@ -290,9 +498,9 @@ namespace PS4_Syscon_Tools
 
                 serialPort.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_UNINIT }, 0, 1);   // uninit command
 
-                stopWatch.Reset();
+                //stopWatch.Reset();
 
-                stopWatch.Start();
+                //stopWatch.Start();
 
                 while (serialPort.BytesToRead < 1)
                 {
@@ -326,6 +534,41 @@ namespace PS4_Syscon_Tools
             OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, (!debugMode) ? "Disconnected From PS4 Syscon Tool Successfully." : "Failed to Disconnect From PS4 Syscon Tool."));
 
             return iRet;
+        }
+
+        public bool PS4SysconToolDisconnect(string port)
+        {
+            bool bolResult = false;
+
+            if (!isConnected)
+            {
+                return true;
+            }
+
+            try
+            {
+                //stopWatch = new Stopwatch();
+
+                OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Disconnecting from PS4 Syscon Tool."));
+
+                serialPort.Close();
+
+                if (!serialPort.IsOpen)
+                {
+                    bolResult = true;
+                    isConnected = false;
+                }
+            }
+                catch (Exception ex)
+            {
+
+                bolResult = false;
+            }
+            
+
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, (!bolResult) ? "Disconnected From PS4 Syscon Tool Successfully." : "Failed to Disconnect From PS4 Syscon Tool."));
+
+            return bolResult;
         }
 
         public int PS4SysconToolDump(out byte[] buffer, int startBlock, int endBlock) {
@@ -501,19 +744,31 @@ namespace PS4_Syscon_Tools
 
                     OnUpdateProcessEvent(new UpdateProcessEventArgs(iReadedData, String.Format("Dumping Block No: {0:D03} At Address: 0x{1:X06}.", iBlockNo, iReadedData)));
 
-                    while ((serialPort.BytesToRead < SYSCON_BLOCK_SIZE))
+                    for (int i = 0; i < SYSCON_BLOCK_SIZE; i += SYSCON_BUFFER_SIZE)
                     {
-                        //System.Threading.Thread.Sleep(100);
+                        iRet = serialPort.Read(sysconFWBuffer, iReadedData, SYSCON_BUFFER_SIZE);
+                        if (iRet != SYSCON_BUFFER_SIZE)
+                        {
+                            return -3;
+                        }
+
+                        iReadedData += SYSCON_BUFFER_SIZE;
+                        
                     }
 
+                    //while ((serialPort.BytesToRead < SYSCON_BLOCK_SIZE))
+                    //{
+                    //    //System.Threading.Thread.Sleep(100);
+                    //}
 
-                    iRet = serialPort.Read(sysconFWBuffer, iReadedData, SYSCON_BLOCK_SIZE);
-                    if (iRet != SYSCON_BLOCK_SIZE)
-                    {
-                        return -3;
-                    }
 
-                    iReadedData += SYSCON_BLOCK_SIZE;
+                    //iRet = serialPort.Read(sysconFWBuffer, iReadedData, SYSCON_BLOCK_SIZE);
+                    //if (iRet != SYSCON_BLOCK_SIZE)
+                    //{
+                    //    return -3;
+                    //}
+
+                    // iReadedData += SYSCON_BLOCK_SIZE;
 
                     iBlockNo++;
                 }
