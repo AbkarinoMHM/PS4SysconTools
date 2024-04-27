@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Drawing;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace PS4_Syscon_Tools
@@ -20,11 +15,11 @@ namespace PS4_Syscon_Tools
             this.labelCopyright.Text = AssemblyCopyright;
             this.labelCompanyName.Text = AssemblyCompany;
             this.textBoxDescription.Text = "Special Thanks To:" + Environment.NewLine +
-                                            "========================================" + Environment.NewLine +
+                                            "==================================" + Environment.NewLine +
                                             "droogie(https://twitter.com/droogie1xp)." + Environment.NewLine + 
                                             "fail0verflow(https://twitter.com/fail0verflow)." + Environment.NewLine +
                                             "wildcard(https://twitter.com/VVildCard777)." + Environment.NewLine +
-                                            "DarkNESmonk." + Environment.NewLine +
+                                            "DarkNESMonk." + Environment.NewLine +
                                             "All beta tester, donators.";
         }
 
