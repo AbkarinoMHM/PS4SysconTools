@@ -40,7 +40,6 @@
             grbSysconProcess = new System.Windows.Forms.GroupBox();
             chkAutoVerify = new System.Windows.Forms.CheckBox();
             chkEnableDebugMode = new System.Windows.Forms.CheckBox();
-            chkAutoErase = new System.Windows.Forms.CheckBox();
             nudNoOfDumps = new System.Windows.Forms.NumericUpDown();
             lblNoOfDumps = new System.Windows.Forms.Label();
             nudEndBlock = new System.Windows.Forms.NumericUpDown();
@@ -141,7 +140,6 @@
             // 
             grbSysconProcess.Controls.Add(chkAutoVerify);
             grbSysconProcess.Controls.Add(chkEnableDebugMode);
-            grbSysconProcess.Controls.Add(chkAutoErase);
             grbSysconProcess.Controls.Add(nudNoOfDumps);
             grbSysconProcess.Controls.Add(lblNoOfDumps);
             grbSysconProcess.Controls.Add(nudEndBlock);
@@ -165,7 +163,7 @@
             // chkAutoVerify
             // 
             chkAutoVerify.AutoSize = true;
-            chkAutoVerify.Location = new System.Drawing.Point(531, 182);
+            chkAutoVerify.Location = new System.Drawing.Point(339, 182);
             chkAutoVerify.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             chkAutoVerify.Name = "chkAutoVerify";
             chkAutoVerify.Size = new System.Drawing.Size(145, 24);
@@ -177,7 +175,7 @@
             // chkEnableDebugMode
             // 
             chkEnableDebugMode.AutoSize = true;
-            chkEnableDebugMode.Location = new System.Drawing.Point(339, 182);
+            chkEnableDebugMode.Location = new System.Drawing.Point(139, 182);
             chkEnableDebugMode.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             chkEnableDebugMode.Name = "chkEnableDebugMode";
             chkEnableDebugMode.Size = new System.Drawing.Size(168, 24);
@@ -185,17 +183,6 @@
             chkEnableDebugMode.Text = "Enable Debug Mode";
             chkEnableDebugMode.UseVisualStyleBackColor = true;
             chkEnableDebugMode.CheckedChanged += chkEnableDebugMode_CheckedChanged;
-            // 
-            // chkAutoErase
-            // 
-            chkAutoErase.AutoSize = true;
-            chkAutoErase.Location = new System.Drawing.Point(139, 182);
-            chkAutoErase.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
-            chkAutoErase.Name = "chkAutoErase";
-            chkAutoErase.Size = new System.Drawing.Size(154, 24);
-            chkAutoErase.TabIndex = 22;
-            chkAutoErase.Text = "Erase Before Write";
-            chkAutoErase.UseVisualStyleBackColor = true;
             // 
             // nudNoOfDumps
             // 
@@ -494,7 +481,7 @@
             MaximizeBox = false;
             Name = "frmPS4SysconTools";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            Text = "PS4 Syscon Tools v2.0.2-beta by Abkarino & EgyCnq";
+            Text = "PS4 Syscon Tools v2.1.0-beta by Abkarino & EgyCnq";
             Load += frmPS4SysconTools_Load;
             staMain.ResumeLayout(false);
             staMain.PerformLayout();
@@ -547,7 +534,6 @@
         private System.Windows.Forms.Label lblEndBlock;
         private System.Windows.Forms.Label lblStartBlock;
         private System.Windows.Forms.CheckBox chkEnableDebugMode;
-        private System.Windows.Forms.CheckBox chkAutoErase;
         private System.Windows.Forms.CheckBox chkAutoVerify;
         private System.Windows.Forms.ToolStripMenuItem mnuOptions;
         private System.Windows.Forms.ToolStripMenuItem mnuEnableAdvancedOptions;

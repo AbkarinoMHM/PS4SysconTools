@@ -29,7 +29,6 @@ namespace PS4_Syscon_Tools
         bool isFilesAreIdentical;
         bool enableAdvancedOptions;
         bool enableAutoDebugMode;
-        bool enableAutoErase;
         bool enableDebugMode;
         bool enableAutoVerify;
         bool processCancelled;
@@ -102,8 +101,6 @@ namespace PS4_Syscon_Tools
                     nudEndBlock.Enabled = false;
                     nudNoOfDumps.Enabled = false;
                     nudNoOfDumps.Enabled = false;
-                    chkAutoErase.Checked = false;
-                    chkAutoErase.Enabled = false;
                     chkEnableDebugMode.Checked = false;
                     chkEnableDebugMode.Enabled = false;
                     chkAutoVerify.Checked = false;
@@ -117,8 +114,6 @@ namespace PS4_Syscon_Tools
                     nudStartBlock.Enabled = false;
                     nudEndBlock.Enabled = false;
                     nudNoOfDumps.Enabled = true;
-                    chkAutoErase.Checked = false;
-                    chkAutoErase.Enabled = false;
                     chkEnableDebugMode.Checked = false;
                     chkEnableDebugMode.Enabled = false;
                     chkAutoVerify.Checked = false;
@@ -132,8 +127,6 @@ namespace PS4_Syscon_Tools
                     nudStartBlock.Enabled = true;
                     nudEndBlock.Enabled = true;
                     nudNoOfDumps.Enabled = true;
-                    chkAutoErase.Checked = false;
-                    chkAutoErase.Enabled = false;
                     chkEnableDebugMode.Checked = false;
                     chkEnableDebugMode.Enabled = false;
                     chkAutoVerify.Checked = false;
@@ -147,8 +140,6 @@ namespace PS4_Syscon_Tools
                     nudStartBlock.Enabled = false;
                     nudEndBlock.Enabled = false;
                     nudNoOfDumps.Enabled = true;
-                    chkAutoErase.Checked = false;
-                    chkAutoErase.Enabled = false;
                     chkEnableDebugMode.Checked = false;
                     chkEnableDebugMode.Enabled = false;
                     chkAutoVerify.Checked = false;
@@ -162,8 +153,6 @@ namespace PS4_Syscon_Tools
                     nudStartBlock.Enabled = false;
                     nudEndBlock.Enabled = false;
                     nudNoOfDumps.Enabled = false;
-                    chkAutoErase.Checked = false;
-                    chkAutoErase.Enabled = false;
                     chkEnableDebugMode.Checked = false;
                     chkEnableDebugMode.Enabled = false;
                     chkAutoVerify.Checked = false;
@@ -177,8 +166,6 @@ namespace PS4_Syscon_Tools
                     nudStartBlock.Enabled = false;
                     nudEndBlock.Enabled = false;
                     nudNoOfDumps.Enabled = false;
-                    chkAutoErase.Checked = false;
-                    chkAutoErase.Enabled = false;
                     chkEnableDebugMode.Checked = false;
                     chkEnableDebugMode.Enabled = false;
                     break;
@@ -190,8 +177,6 @@ namespace PS4_Syscon_Tools
                     nudStartBlock.Enabled = true;
                     nudEndBlock.Enabled = true;
                     nudNoOfDumps.Enabled = false;
-                    chkAutoErase.Checked = false;
-                    chkAutoErase.Enabled = false;
                     chkEnableDebugMode.Checked = false;
                     chkEnableDebugMode.Enabled = false;
                     chkAutoVerify.Checked = false;
@@ -205,8 +190,6 @@ namespace PS4_Syscon_Tools
                     nudStartBlock.Enabled = false;
                     nudEndBlock.Enabled = false;
                     nudNoOfDumps.Enabled = false;
-                    chkAutoErase.Checked = false;
-                    chkAutoErase.Enabled = false;
                     chkEnableDebugMode.Checked = false;
                     chkEnableDebugMode.Enabled = false;
                     chkAutoVerify.Checked = false;
@@ -220,8 +203,6 @@ namespace PS4_Syscon_Tools
                     nudStartBlock.Enabled = false;
                     nudEndBlock.Enabled = false;
                     nudNoOfDumps.Enabled = false;
-                    chkAutoErase.Checked = true;
-                    chkAutoErase.Enabled = true;
                     chkEnableDebugMode.Checked = false;
                     chkEnableDebugMode.Enabled = true;
                     chkAutoVerify.Checked = true;
@@ -235,8 +216,6 @@ namespace PS4_Syscon_Tools
                     nudStartBlock.Enabled = true;
                     nudEndBlock.Enabled = true;
                     nudNoOfDumps.Enabled = false;
-                    chkAutoErase.Checked = true;
-                    chkAutoErase.Enabled = true;
                     chkEnableDebugMode.Checked = false;
                     chkEnableDebugMode.Enabled = false;
                     chkAutoVerify.Checked = true;
@@ -251,8 +230,6 @@ namespace PS4_Syscon_Tools
                     nudEndBlock.Enabled = false;
                     nudNoOfDumps.Enabled = false;
                     nudNoOfDumps.Enabled = false;
-                    chkAutoErase.Checked = true;
-                    chkAutoErase.Enabled = true;
                     chkEnableDebugMode.Checked = false;
                     chkEnableDebugMode.Enabled = false;
                     chkAutoVerify.Checked = true;
@@ -267,8 +244,6 @@ namespace PS4_Syscon_Tools
                     nudEndBlock.Enabled = false;
                     nudNoOfDumps.Enabled = false;
                     nudNoOfDumps.Enabled = false;
-                    chkAutoErase.Checked = true;
-                    chkAutoErase.Enabled = false;
                     chkEnableDebugMode.Checked = true;
                     chkEnableDebugMode.Enabled = false;
                     chkAutoVerify.Checked = true;
@@ -328,7 +303,8 @@ namespace PS4_Syscon_Tools
                     case PS4SysconTool.SYSCON_PROCESS.DUMP_FULL:
                         sysconFWFilePath = txtInputOutputFile.Text;
 
-                        if (String.IsNullOrEmpty(sysconFWFilePath)) {
+                        if (String.IsNullOrEmpty(sysconFWFilePath))
+                        {
                             _ = MessageBox.Show("Error Dump File Path Can't be Empty.\nPlease Select a Correct Path Then Try Again.",
                                    "Error Dumping Syscon!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                             iRet = -1;
@@ -527,7 +503,6 @@ namespace PS4_Syscon_Tools
                         }
                         sysconFWFilePath = txtInputOutputFile.Text;
 
-                        enableAutoErase = chkAutoErase.Checked;
                         enableDebugMode = chkEnableDebugMode.Checked;
 
                         prbProgress.Maximum = (int)PS4SysconTool.SYSCON_BLOCKS_NO;
@@ -570,7 +545,7 @@ namespace PS4_Syscon_Tools
                         }
 
                         iRet = ps4SysconTool.PS4SysconToolWrite(sysconFWBuffer, PS4SysconTool.SYSCON_FLASH_START_BLOCK, PS4SysconTool.SYSCON_FLASH_END_BLOCK,
-                            enableAutoErase);
+                            true);
                         if (iRet != 0)
                         {
                             /// todo: to add error message here
@@ -612,7 +587,6 @@ namespace PS4_Syscon_Tools
                         noOfBlocks = (short)(endBlock - startBlock + 1);
                         prbProgress.Maximum = noOfBlocks;
 
-                        enableAutoErase = chkAutoErase.Checked;
                         enableDebugMode = chkEnableDebugMode.Checked;
 
                         sysconFWBuffer = new byte[noOfBlocks * PS4SysconTool.SYSCON_BLOCK_SIZE];
@@ -626,7 +600,7 @@ namespace PS4_Syscon_Tools
                             break;
                         }
 
-                        iRet = ps4SysconTool.PS4SysconToolWrite(sysconFWBuffer, startBlock, endBlock, enableAutoErase);
+                        iRet = ps4SysconTool.PS4SysconToolWrite(sysconFWBuffer, startBlock, endBlock, true);
                         if (iRet != 0)
                         {
                             /// todo: to add error message here
@@ -655,8 +629,6 @@ namespace PS4_Syscon_Tools
                         endBlock = PS4SysconTool.SYSCON_NVS_SNVS_END_BLOCK;
                         noOfBlocks = PS4SysconTool.SYSCON_NVS_SNVS_BLOCKS;
                         prbProgress.Maximum = PS4SysconTool.SYSCON_NVS_SNVS_BLOCKS;
-
-                        enableAutoErase = chkAutoErase.Checked;
 
                         sysconFWBuffer = new byte[PS4SysconTool.SYSCON_NVS_SNVS_SIZE];
 
@@ -687,7 +659,7 @@ namespace PS4_Syscon_Tools
                             break;
                         }
 
-                        iRet = ps4SysconTool.PS4SysconToolWrite(sysconFWBuffer, startBlock, endBlock, enableAutoErase);
+                        iRet = ps4SysconTool.PS4SysconToolWrite(sysconFWBuffer, startBlock, endBlock, true);
                         if (iRet != 0)
                         {
                             /// todo: to add error message here
@@ -864,7 +836,8 @@ namespace PS4_Syscon_Tools
 
         private void mnuEnableAdvancedOptions_Click(object sender, EventArgs e)
         {
-            if (!enableAdvancedOptions) {
+            if (!enableAdvancedOptions)
+            {
                 DialogResult result = MessageBox.Show("You Are Going To Enable Advanced Options, That Is Meant For Developers And People Who Know How To Use It Only.\n Are You Sure That You Want To Enable Advanced Options?", "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
                 if (result == DialogResult.No)
                 {
@@ -924,14 +897,15 @@ namespace PS4_Syscon_Tools
                     tslOCDModeValue.Text = "Enabled";
                     //cboSysconProcess.SelectedIndex = 1;
                 }
-                else 
+                else
                 {
                     tslOCDModeValue.ForeColor = Color.Red;
                     tslOCDModeValue.Text = "Disabled";
                     //cboSysconProcess.SelectedIndex = 1;
                 }
 
-                if (btnStart.Enabled) {
+                if (btnStart.Enabled)
+                {
                     SetSysconProcess(connected, enableAdvancedOptions);
                     cboSysconProcess.SelectedIndex = 1;
                 }
@@ -1052,5 +1026,6 @@ namespace PS4_Syscon_Tools
             isInit = !ps4SysconTool.PS4SysconToolReset();
             CheckForConnectedPS4SysconTool();
         }
+
     }
 }

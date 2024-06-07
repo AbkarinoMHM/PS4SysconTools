@@ -1063,23 +1063,15 @@ namespace PS4_Syscon_Tools
             } else if ((sysconBoot0Buffer[SYSCON_DEBUG_SETTING_OFFSET] == 0x84) || (sysconBoot0Buffer[SYSCON_DEBUG_SETTING_OFFSET] == 0x85)) {
               OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Syscon Debug Mode Already Enabled.."));
               return -10;
-              }
+            }     
 
-            OnUpdateProcessEvent(new UpdateProcessEventArgs(2, "Erasing Syscon Boot0 Block.."));
-            iRet = PS4SysconToolErase(SYSCON_FLASH_START_BLOCK, SYSCON_FLASH_START_BLOCK);
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(2, "Writing Syscon Boot0 Blocks.."));
+            iRet = PS4SysconToolWrite(sysconBoot0Buffer, SYSCON_FLASH_START_BLOCK, SYSCON_FLASH_START_BLOCK, true);
             if (iRet != 0)
             {
                 return iRet;
             }
-            OnUpdateProcessEvent(new UpdateProcessEventArgs(2, "Syscon Boot0 Block Erased Successfully.."));
-
-            OnUpdateProcessEvent(new UpdateProcessEventArgs(3, "Writing Syscon Boot0 Blocks.."));
-            iRet = PS4SysconToolWrite(sysconBoot0Buffer, SYSCON_FLASH_START_BLOCK, SYSCON_FLASH_START_BLOCK);
-            if (iRet != 0)
-            {
-                return iRet;
-            }
-            OnUpdateProcessEvent(new UpdateProcessEventArgs(3, "Syscon Boot0 Block Written Successfully.."));
+            OnUpdateProcessEvent(new UpdateProcessEventArgs(2, "Syscon Boot0 Block Written Successfully.."));
 
             OnUpdateProcessEvent(new UpdateProcessEventArgs(-1, "Enabling Syscon Debug Mode Process Finished Successfully!!!.."));
 
