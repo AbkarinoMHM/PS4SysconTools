@@ -5,6 +5,9 @@ It consists of 2 projects:
 - PS4 Syscon Tools (PC client to allow you to control your PS4 Syscon Flasher hardware).
 - PS4 Syscon Flasher (Hardware flasher based currently on Teensy++ 2.0 - Teensy 4.0 - Teensy 4.1).
 
+![image_2025-05-15_23-58-09](https://github.com/user-attachments/assets/f2cd005a-468f-400f-9cb4-cec4c7f9befd)
+![image_2025-05-16_00-13-37](https://github.com/user-attachments/assets/115e3981-ff19-4a86-8562-09145f9af104)
+
 Features:
 =======================================
 - Syscon Flash Dumps: 
@@ -78,4 +81,4 @@ Donations:
 =========================================
 If you like our work and want to support us to get a new hardware to port our code to it or to be able to buy some damaged consoles to use it in reaserch, please donate to:
 
-PayPal: mh.nasr@outlook.com
+PayPal: mh.nasr@outlook.com (https://paypal.me/abkarinomhm)
