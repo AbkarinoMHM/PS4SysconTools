@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net9.0-windows7.0</TargetFramework>
     <OutputType>WinExe</OutputType>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
@@ -31,8 +31,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <Description>A tool to allow handling PS4 Syscon original locked chips (Renesas RL78/G13).</Description>
     <Copyright>Abkarino &amp;&amp; EgyCnq</Copyright>
-    <AssemblyVersion>2.0.2</AssemblyVersion>
-    <FileVersion>2.0.2</FileVersion>
+    <AssemblyVersion>2.2.0</AssemblyVersion>
+    <FileVersion>2.2.0</FileVersion>
     <PackageProjectUrl>https://github.com/AbkarinoMHM/PS4SysconTools</PackageProjectUrl>
   </PropertyGroup>
   <ItemGroup>

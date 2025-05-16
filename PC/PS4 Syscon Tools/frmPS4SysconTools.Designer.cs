@@ -35,8 +35,6 @@
             tslSysconToolValue = new System.Windows.Forms.ToolStripStatusLabel();
             tslVersion = new System.Windows.Forms.ToolStripStatusLabel();
             tslVersionValue = new System.Windows.Forms.ToolStripStatusLabel();
-            tslOCDMode = new System.Windows.Forms.ToolStripStatusLabel();
-            tslOCDModeValue = new System.Windows.Forms.ToolStripStatusLabel();
             grbSysconProcess = new System.Windows.Forms.GroupBox();
             chkAutoVerify = new System.Windows.Forms.CheckBox();
             chkEnableDebugMode = new System.Windows.Forms.CheckBox();
@@ -87,11 +85,11 @@
             // staMain
             // 
             staMain.ImageScalingSize = new System.Drawing.Size(20, 20);
-            staMain.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tslSysconTool, tslSysconToolValue, tslVersion, tslVersionValue, tslOCDMode, tslOCDModeValue });
-            staMain.Location = new System.Drawing.Point(0, 813);
+            staMain.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { tslSysconTool, tslSysconToolValue, tslVersion, tslVersionValue });
+            staMain.Location = new System.Drawing.Point(0, 607);
             staMain.Name = "staMain";
-            staMain.Padding = new System.Windows.Forms.Padding(1, 0, 19, 0);
-            staMain.Size = new System.Drawing.Size(704, 26);
+            staMain.Padding = new System.Windows.Forms.Padding(1, 0, 17, 0);
+            staMain.Size = new System.Drawing.Size(616, 22);
             staMain.TabIndex = 8;
             staMain.Text = "staMain";
             // 
@@ -99,42 +97,28 @@
             // 
             tslSysconTool.ForeColor = System.Drawing.Color.Blue;
             tslSysconTool.Name = "tslSysconTool";
-            tslSysconTool.Size = new System.Drawing.Size(94, 20);
+            tslSysconTool.Size = new System.Drawing.Size(75, 17);
             tslSysconTool.Text = "Syscon Tool :";
             // 
             // tslSysconToolValue
             // 
             tslSysconToolValue.ForeColor = System.Drawing.Color.FromArgb(0, 192, 0);
             tslSysconToolValue.Name = "tslSysconToolValue";
-            tslSysconToolValue.Size = new System.Drawing.Size(0, 20);
+            tslSysconToolValue.Size = new System.Drawing.Size(0, 17);
             // 
             // tslVersion
             // 
             tslVersion.ForeColor = System.Drawing.Color.Blue;
             tslVersion.Margin = new System.Windows.Forms.Padding(80, 3, 0, 2);
             tslVersion.Name = "tslVersion";
-            tslVersion.Size = new System.Drawing.Size(60, 21);
+            tslVersion.Size = new System.Drawing.Size(48, 17);
             tslVersion.Text = "Version:";
             // 
             // tslVersionValue
             // 
             tslVersionValue.ForeColor = System.Drawing.Color.FromArgb(0, 192, 0);
             tslVersionValue.Name = "tslVersionValue";
-            tslVersionValue.Size = new System.Drawing.Size(0, 20);
-            // 
-            // tslOCDMode
-            // 
-            tslOCDMode.ForeColor = System.Drawing.Color.Blue;
-            tslOCDMode.Margin = new System.Windows.Forms.Padding(80, 3, 0, 2);
-            tslOCDMode.Name = "tslOCDMode";
-            tslOCDMode.Size = new System.Drawing.Size(86, 21);
-            tslOCDMode.Text = "OCD Mode:";
-            // 
-            // tslOCDModeValue
-            // 
-            tslOCDModeValue.ForeColor = System.Drawing.Color.FromArgb(0, 192, 0);
-            tslOCDModeValue.Name = "tslOCDModeValue";
-            tslOCDModeValue.Size = new System.Drawing.Size(0, 20);
+            tslVersionValue.Size = new System.Drawing.Size(0, 17);
             // 
             // grbSysconProcess
             // 
@@ -151,11 +135,11 @@
             grbSysconProcess.Controls.Add(label1);
             grbSysconProcess.Controls.Add(cboSysconProcess);
             grbSysconProcess.Controls.Add(lblSysconProcessType);
-            grbSysconProcess.Location = new System.Drawing.Point(12, 33);
-            grbSysconProcess.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            grbSysconProcess.Location = new System.Drawing.Point(10, 25);
+            grbSysconProcess.Margin = new System.Windows.Forms.Padding(4);
             grbSysconProcess.Name = "grbSysconProcess";
-            grbSysconProcess.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            grbSysconProcess.Size = new System.Drawing.Size(680, 220);
+            grbSysconProcess.Padding = new System.Windows.Forms.Padding(4);
+            grbSysconProcess.Size = new System.Drawing.Size(595, 165);
             grbSysconProcess.TabIndex = 6;
             grbSysconProcess.TabStop = false;
             grbSysconProcess.Text = "PS4 Syscon Process";
@@ -163,10 +147,10 @@
             // chkAutoVerify
             // 
             chkAutoVerify.AutoSize = true;
-            chkAutoVerify.Location = new System.Drawing.Point(339, 182);
+            chkAutoVerify.Location = new System.Drawing.Point(297, 136);
             chkAutoVerify.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             chkAutoVerify.Name = "chkAutoVerify";
-            chkAutoVerify.Size = new System.Drawing.Size(145, 24);
+            chkAutoVerify.Size = new System.Drawing.Size(115, 19);
             chkAutoVerify.TabIndex = 24;
             chkAutoVerify.Text = "Verify After Write";
             chkAutoVerify.UseVisualStyleBackColor = true;
@@ -175,10 +159,10 @@
             // chkEnableDebugMode
             // 
             chkEnableDebugMode.AutoSize = true;
-            chkEnableDebugMode.Location = new System.Drawing.Point(139, 182);
+            chkEnableDebugMode.Location = new System.Drawing.Point(122, 136);
             chkEnableDebugMode.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             chkEnableDebugMode.Name = "chkEnableDebugMode";
-            chkEnableDebugMode.Size = new System.Drawing.Size(168, 24);
+            chkEnableDebugMode.Size = new System.Drawing.Size(133, 19);
             chkEnableDebugMode.TabIndex = 23;
             chkEnableDebugMode.Text = "Enable Debug Mode";
             chkEnableDebugMode.UseVisualStyleBackColor = true;
@@ -186,12 +170,12 @@
             // 
             // nudNoOfDumps
             // 
-            nudNoOfDumps.Location = new System.Drawing.Point(587, 139);
+            nudNoOfDumps.Location = new System.Drawing.Point(514, 104);
             nudNoOfDumps.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             nudNoOfDumps.Maximum = new decimal(new int[] { 2, 0, 0, 0 });
             nudNoOfDumps.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             nudNoOfDumps.Name = "nudNoOfDumps";
-            nudNoOfDumps.Size = new System.Drawing.Size(81, 27);
+            nudNoOfDumps.Size = new System.Drawing.Size(71, 23);
             nudNoOfDumps.TabIndex = 21;
             nudNoOfDumps.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             nudNoOfDumps.Value = new decimal(new int[] { 2, 0, 0, 0 });
@@ -199,60 +183,60 @@
             // lblNoOfDumps
             // 
             lblNoOfDumps.AutoSize = true;
-            lblNoOfDumps.Location = new System.Drawing.Point(472, 141);
+            lblNoOfDumps.Location = new System.Drawing.Point(413, 106);
             lblNoOfDumps.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lblNoOfDumps.Name = "lblNoOfDumps";
-            lblNoOfDumps.Size = new System.Drawing.Size(106, 20);
+            lblNoOfDumps.Size = new System.Drawing.Size(86, 15);
             lblNoOfDumps.TabIndex = 20;
             lblNoOfDumps.Text = "No. Of Dumps:";
             // 
             // nudEndBlock
             // 
-            nudEndBlock.Location = new System.Drawing.Point(339, 139);
+            nudEndBlock.Location = new System.Drawing.Point(297, 104);
             nudEndBlock.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             nudEndBlock.Maximum = new decimal(new int[] { 511, 0, 0, 0 });
             nudEndBlock.Name = "nudEndBlock";
-            nudEndBlock.Size = new System.Drawing.Size(81, 27);
+            nudEndBlock.Size = new System.Drawing.Size(71, 23);
             nudEndBlock.TabIndex = 19;
             nudEndBlock.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             nudEndBlock.Value = new decimal(new int[] { 511, 0, 0, 0 });
             // 
             // nudStartBlock
             // 
-            nudStartBlock.Location = new System.Drawing.Point(139, 139);
+            nudStartBlock.Location = new System.Drawing.Point(122, 104);
             nudStartBlock.Margin = new System.Windows.Forms.Padding(3, 2, 3, 2);
             nudStartBlock.Maximum = new decimal(new int[] { 511, 0, 0, 0 });
             nudStartBlock.Name = "nudStartBlock";
-            nudStartBlock.Size = new System.Drawing.Size(81, 27);
+            nudStartBlock.Size = new System.Drawing.Size(71, 23);
             nudStartBlock.TabIndex = 18;
             nudStartBlock.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             // 
             // lblEndBlock
             // 
             lblEndBlock.AutoSize = true;
-            lblEndBlock.Location = new System.Drawing.Point(247, 141);
+            lblEndBlock.Location = new System.Drawing.Point(216, 106);
             lblEndBlock.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lblEndBlock.Name = "lblEndBlock";
-            lblEndBlock.Size = new System.Drawing.Size(77, 20);
+            lblEndBlock.Size = new System.Drawing.Size(62, 15);
             lblEndBlock.TabIndex = 17;
             lblEndBlock.Text = "End Block:";
             // 
             // lblStartBlock
             // 
             lblStartBlock.AutoSize = true;
-            lblStartBlock.Location = new System.Drawing.Point(41, 141);
+            lblStartBlock.Location = new System.Drawing.Point(36, 106);
             lblStartBlock.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lblStartBlock.Name = "lblStartBlock";
-            lblStartBlock.Size = new System.Drawing.Size(83, 20);
+            lblStartBlock.Size = new System.Drawing.Size(66, 15);
             lblStartBlock.TabIndex = 16;
             lblStartBlock.Text = "Start Block:";
             // 
             // btnBrowse
             // 
-            btnBrowse.Location = new System.Drawing.Point(608, 88);
-            btnBrowse.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            btnBrowse.Location = new System.Drawing.Point(532, 66);
+            btnBrowse.Margin = new System.Windows.Forms.Padding(4);
             btnBrowse.Name = "btnBrowse";
-            btnBrowse.Size = new System.Drawing.Size(60, 32);
+            btnBrowse.Size = new System.Drawing.Size(52, 24);
             btnBrowse.TabIndex = 13;
             btnBrowse.Text = "....";
             btnBrowse.UseVisualStyleBackColor = true;
@@ -262,62 +246,63 @@
             // 
             txtInputOutputFile.AllowDrop = true;
             txtInputOutputFile.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            txtInputOutputFile.Location = new System.Drawing.Point(137, 89);
-            txtInputOutputFile.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            txtInputOutputFile.Location = new System.Drawing.Point(120, 67);
+            txtInputOutputFile.Margin = new System.Windows.Forms.Padding(4);
             txtInputOutputFile.MaxLength = 25;
             txtInputOutputFile.Name = "txtInputOutputFile";
-            txtInputOutputFile.Size = new System.Drawing.Size(463, 27);
+            txtInputOutputFile.Size = new System.Drawing.Size(405, 23);
             txtInputOutputFile.TabIndex = 12;
             // 
             // label1
             // 
             label1.AutoSize = true;
-            label1.Location = new System.Drawing.Point(4, 94);
+            label1.Location = new System.Drawing.Point(4, 70);
             label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             label1.Name = "label1";
-            label1.Size = new System.Drawing.Size(125, 20);
+            label1.Size = new System.Drawing.Size(102, 15);
             label1.TabIndex = 11;
             label1.Text = "Input/Output File:";
             // 
             // cboSysconProcess
             // 
             cboSysconProcess.DataSource = sysconProcessBindingSource;
+            cboSysconProcess.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             cboSysconProcess.FormattingEnabled = true;
-            cboSysconProcess.Location = new System.Drawing.Point(137, 42);
-            cboSysconProcess.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            cboSysconProcess.Location = new System.Drawing.Point(120, 32);
+            cboSysconProcess.Margin = new System.Windows.Forms.Padding(4);
             cboSysconProcess.Name = "cboSysconProcess";
-            cboSysconProcess.Size = new System.Drawing.Size(531, 28);
+            cboSysconProcess.Size = new System.Drawing.Size(465, 23);
             cboSysconProcess.TabIndex = 3;
             cboSysconProcess.SelectedIndexChanged += cboSysconProcess_SelectedIndexChanged;
             // 
             // lblSysconProcessType
             // 
             lblSysconProcessType.AutoSize = true;
-            lblSysconProcessType.Location = new System.Drawing.Point(7, 49);
+            lblSysconProcessType.Location = new System.Drawing.Point(6, 37);
             lblSysconProcessType.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lblSysconProcessType.Name = "lblSysconProcessType";
-            lblSysconProcessType.Size = new System.Drawing.Size(110, 20);
+            lblSysconProcessType.Size = new System.Drawing.Size(90, 15);
             lblSysconProcessType.TabIndex = 2;
             lblSysconProcessType.Text = "Syscon Process:";
             // 
             // txtLog
             // 
-            txtLog.Location = new System.Drawing.Point(11, 29);
-            txtLog.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            txtLog.Location = new System.Drawing.Point(10, 22);
+            txtLog.Margin = new System.Windows.Forms.Padding(4);
             txtLog.MaxLength = 0;
             txtLog.Multiline = true;
             txtLog.Name = "txtLog";
             txtLog.ReadOnly = true;
             txtLog.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            txtLog.Size = new System.Drawing.Size(661, 410);
+            txtLog.Size = new System.Drawing.Size(579, 308);
             txtLog.TabIndex = 9;
             // 
             // btnStart
             // 
-            btnStart.Location = new System.Drawing.Point(572, 31);
-            btnStart.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            btnStart.Location = new System.Drawing.Point(500, 23);
+            btnStart.Margin = new System.Windows.Forms.Padding(4);
             btnStart.Name = "btnStart";
-            btnStart.Size = new System.Drawing.Size(100, 35);
+            btnStart.Size = new System.Drawing.Size(88, 26);
             btnStart.TabIndex = 5;
             btnStart.Text = "&Start ";
             btnStart.UseVisualStyleBackColor = true;
@@ -329,7 +314,8 @@
             mnuMain.Items.AddRange(new System.Windows.Forms.ToolStripItem[] { mnuDevices, mnuOptions, mnuHelp });
             mnuMain.Location = new System.Drawing.Point(0, 0);
             mnuMain.Name = "mnuMain";
-            mnuMain.Size = new System.Drawing.Size(704, 28);
+            mnuMain.Padding = new System.Windows.Forms.Padding(5, 2, 0, 2);
+            mnuMain.Size = new System.Drawing.Size(616, 24);
             mnuMain.TabIndex = 7;
             mnuMain.Text = "menuStrip1";
             // 
@@ -337,25 +323,25 @@
             // 
             mnuDevices.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { mnuResetPS4SysconFlasher, toolStripMenuItem1, mnuExit });
             mnuDevices.Name = "mnuDevices";
-            mnuDevices.Size = new System.Drawing.Size(74, 24);
+            mnuDevices.Size = new System.Drawing.Size(59, 20);
             mnuDevices.Text = "&Devices";
             // 
             // mnuResetPS4SysconFlasher
             // 
             mnuResetPS4SysconFlasher.Name = "mnuResetPS4SysconFlasher";
-            mnuResetPS4SysconFlasher.Size = new System.Drawing.Size(255, 26);
+            mnuResetPS4SysconFlasher.Size = new System.Drawing.Size(204, 22);
             mnuResetPS4SysconFlasher.Text = "&Reset PS4 Syscon Flasher";
             mnuResetPS4SysconFlasher.Click += mnuResetPS4SysconFlasher_Click;
             // 
             // toolStripMenuItem1
             // 
             toolStripMenuItem1.Name = "toolStripMenuItem1";
-            toolStripMenuItem1.Size = new System.Drawing.Size(252, 6);
+            toolStripMenuItem1.Size = new System.Drawing.Size(201, 6);
             // 
             // mnuExit
             // 
             mnuExit.Name = "mnuExit";
-            mnuExit.Size = new System.Drawing.Size(255, 26);
+            mnuExit.Size = new System.Drawing.Size(204, 22);
             mnuExit.Text = "E&xit";
             mnuExit.Click += mnuExit_Click;
             // 
@@ -363,20 +349,20 @@
             // 
             mnuOptions.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { mnuEnableAdvancedOptions, mnuEnableAutoDebugMode });
             mnuOptions.Name = "mnuOptions";
-            mnuOptions.Size = new System.Drawing.Size(75, 24);
+            mnuOptions.Size = new System.Drawing.Size(61, 20);
             mnuOptions.Text = "&Options";
             // 
             // mnuEnableAdvancedOptions
             // 
             mnuEnableAdvancedOptions.Name = "mnuEnableAdvancedOptions";
-            mnuEnableAdvancedOptions.Size = new System.Drawing.Size(265, 26);
+            mnuEnableAdvancedOptions.Size = new System.Drawing.Size(210, 22);
             mnuEnableAdvancedOptions.Text = "Enable &Advanced Options";
             mnuEnableAdvancedOptions.Click += mnuEnableAdvancedOptions_Click;
             // 
             // mnuEnableAutoDebugMode
             // 
             mnuEnableAutoDebugMode.Name = "mnuEnableAutoDebugMode";
-            mnuEnableAutoDebugMode.Size = new System.Drawing.Size(265, 26);
+            mnuEnableAutoDebugMode.Size = new System.Drawing.Size(210, 22);
             mnuEnableAutoDebugMode.Text = "Enable Auto &Debug Mode";
             mnuEnableAutoDebugMode.Click += mnuEnableAutoDebugMode_Click;
             // 
@@ -384,24 +370,24 @@
             // 
             mnuHelp.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] { helpToolStripMenuItem1, toolStripMenuItem2, mnuAbout });
             mnuHelp.Name = "mnuHelp";
-            mnuHelp.Size = new System.Drawing.Size(55, 24);
+            mnuHelp.Size = new System.Drawing.Size(44, 20);
             mnuHelp.Text = "&Help";
             // 
             // helpToolStripMenuItem1
             // 
             helpToolStripMenuItem1.Name = "helpToolStripMenuItem1";
-            helpToolStripMenuItem1.Size = new System.Drawing.Size(133, 26);
+            helpToolStripMenuItem1.Size = new System.Drawing.Size(107, 22);
             helpToolStripMenuItem1.Text = "&Help";
             // 
             // toolStripMenuItem2
             // 
             toolStripMenuItem2.Name = "toolStripMenuItem2";
-            toolStripMenuItem2.Size = new System.Drawing.Size(130, 6);
+            toolStripMenuItem2.Size = new System.Drawing.Size(104, 6);
             // 
             // mnuAbout
             // 
             mnuAbout.Name = "mnuAbout";
-            mnuAbout.Size = new System.Drawing.Size(133, 26);
+            mnuAbout.Size = new System.Drawing.Size(107, 22);
             mnuAbout.Text = "&About";
             mnuAbout.Click += mnuAbout_Click;
             // 
@@ -410,40 +396,40 @@
             grbProcess.Controls.Add(btnStart);
             grbProcess.Controls.Add(prbProgress);
             grbProcess.Controls.Add(lblProgress);
-            grbProcess.Location = new System.Drawing.Point(12, 262);
-            grbProcess.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            grbProcess.Location = new System.Drawing.Point(10, 196);
+            grbProcess.Margin = new System.Windows.Forms.Padding(4);
             grbProcess.Name = "grbProcess";
-            grbProcess.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            grbProcess.Size = new System.Drawing.Size(680, 86);
+            grbProcess.Padding = new System.Windows.Forms.Padding(4);
+            grbProcess.Size = new System.Drawing.Size(595, 64);
             grbProcess.TabIndex = 9;
             grbProcess.TabStop = false;
             // 
             // prbProgress
             // 
-            prbProgress.Location = new System.Drawing.Point(104, 31);
-            prbProgress.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            prbProgress.Location = new System.Drawing.Point(91, 23);
+            prbProgress.Margin = new System.Windows.Forms.Padding(4);
             prbProgress.Name = "prbProgress";
-            prbProgress.Size = new System.Drawing.Size(439, 35);
+            prbProgress.Size = new System.Drawing.Size(384, 26);
             prbProgress.TabIndex = 4;
             // 
             // lblProgress
             // 
             lblProgress.AutoSize = true;
-            lblProgress.Location = new System.Drawing.Point(19, 38);
+            lblProgress.Location = new System.Drawing.Point(17, 28);
             lblProgress.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             lblProgress.Name = "lblProgress";
-            lblProgress.Size = new System.Drawing.Size(68, 20);
+            lblProgress.Size = new System.Drawing.Size(55, 15);
             lblProgress.TabIndex = 3;
             lblProgress.Text = "Progress:";
             // 
             // grbLog
             // 
             grbLog.Controls.Add(txtLog);
-            grbLog.Location = new System.Drawing.Point(12, 358);
-            grbLog.Margin = new System.Windows.Forms.Padding(4, 5, 4, 5);
+            grbLog.Location = new System.Drawing.Point(10, 268);
+            grbLog.Margin = new System.Windows.Forms.Padding(4);
             grbLog.Name = "grbLog";
-            grbLog.Padding = new System.Windows.Forms.Padding(4, 5, 4, 5);
-            grbLog.Size = new System.Drawing.Size(680, 449);
+            grbLog.Padding = new System.Windows.Forms.Padding(4);
+            grbLog.Size = new System.Drawing.Size(595, 337);
             grbLog.TabIndex = 10;
             grbLog.TabStop = false;
             grbLog.Text = "Process Log";
@@ -459,17 +445,11 @@
             dlgOpenFile.Filter = "PS4 Syscon FW Dump (*.bin)|*bin|All Files (*.*)|*.*";
             dlgOpenFile.Title = "Please Select Syscon FW Dump File";
             // 
-            // deviceWatcher
-            // 
-            deviceWatcher.WorkerReportsProgress = true;
-            deviceWatcher.WorkerSupportsCancellation = true;
-            deviceWatcher.DoWork += deviceWatcher_DoWork;
-            // 
             // frmPS4SysconTools
             // 
-            AutoScaleDimensions = new System.Drawing.SizeF(8F, 20F);
+            AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            ClientSize = new System.Drawing.Size(704, 839);
+            ClientSize = new System.Drawing.Size(616, 629);
             Controls.Add(grbLog);
             Controls.Add(grbProcess);
             Controls.Add(staMain);
@@ -481,7 +461,7 @@
             MaximizeBox = false;
             Name = "frmPS4SysconTools";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            Text = "PS4 Syscon Tools v2.1.0-beta by Abkarino & EgyCnq";
+            Text = "PS4 Syscon Tools v2.2.0  by Abkarino & EgyCnq";
             Load += frmPS4SysconTools_Load;
             staMain.ResumeLayout(false);
             staMain.PerformLayout();
@@ -525,8 +505,6 @@
         private System.Windows.Forms.OpenFileDialog dlgOpenFile;
         private System.Windows.Forms.ToolStripStatusLabel tslSysconTool;
         private System.Windows.Forms.ToolStripStatusLabel tslSysconToolValue;
-        private System.Windows.Forms.ToolStripStatusLabel tslOCDMode;
-        private System.Windows.Forms.ToolStripStatusLabel tslOCDModeValue;
         private System.Windows.Forms.NumericUpDown nudNoOfDumps;
         private System.Windows.Forms.Label lblNoOfDumps;
         private System.Windows.Forms.NumericUpDown nudEndBlock;
