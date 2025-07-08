@@ -314,6 +314,8 @@ namespace PS4_Syscon_Tools
                     {
 
                         ps4SysconFlasher.Open();
+                        //ps4SysconFlasher.ReadTimeout = 3000;
+                        //ps4SysconFlasher.WriteTimeout = 3000;
                         ps4SysconFlasher.DiscardOutBuffer();
                         ps4SysconFlasher.DiscardInBuffer();
 
@@ -964,7 +966,7 @@ namespace PS4_Syscon_Tools
         private void CheckForConnectedPS4SysconTool()
         {
             // Create a WMI query to check for connected devices
-            string query = $"SELECT * FROM Win32_PnPEntity WHERE DeviceID LIKE '%USB\\\\VID_{PS4SysconTool.PS4_SYSCON_FLASHER_VID}%&PID_{PS4SysconTool.PS4_SYSCON_FLASHER_PID}%'";
+            string query = $"SELECT * FROM Win32_PnPEntity WHERE DeviceID LIKE '%USB\\\\VID_{PS4SysconTool.PS4_SYSCON_FLASHER_VID}%&PID_{PS4SysconTool.PS4_SYSCON_FLASHER_1_PID}%' OR DeviceID LIKE '%USB\\\\VID_{PS4SysconTool.PS4_SYSCON_FLASHER_VID}%&PID_{PS4SysconTool.PS4_SYSCON_FLASHER_2_PID}%'";
 
             using (var searcher = new ManagementObjectSearcher(query))
             {
@@ -1012,52 +1014,58 @@ namespace PS4_Syscon_Tools
             // Watcher for device arrival
             string arrivalQuery = "SELECT * FROM __InstanceCreationEvent WITHIN 2 WHERE TargetInstance ISA 'Win32_PnPEntity'";
             var arrivalWatcher = new ManagementEventWatcher(arrivalQuery);
-            arrivalWatcher.EventArrived += (sender, e) =>
-            {
-                var instance = (ManagementBaseObject)e.NewEvent["TargetInstance"];
-                string deviceId = instance["DeviceID"].ToString();
-                if (deviceId.Contains($"USB\\VID_{PS4SysconTool.PS4_SYSCON_FLASHER_VID}&PID_{PS4SysconTool.PS4_SYSCON_FLASHER_PID}"))
-                {
-                    comPort = GetComPortFromDeviceId(deviceId);
-                    if (comPort != null)
-                    {
-                        isDetected = ps4SysconTool.PS4SysconToolDetect(comPort, out version, out freememory);
-                    }
-                    else
-                    {
-                        isDetected = false;
-                        comPort = "";
-                        version = "";
-                        isInit = false;
-                        txtLog.Clear();
-                    }
+            arrivalWatcher.EventArrived += ArrivalWatcher_EventArrived;
 
-                    UpdateStatus(isDetected, version);
-                }
-            };
             arrivalWatcher.Start();
 
             // Watcher for device removal
             string removalQuery = "SELECT * FROM __InstanceDeletionEvent WITHIN 2 WHERE TargetInstance ISA 'Win32_PnPEntity'";
             var removalWatcher = new ManagementEventWatcher(removalQuery);
-            removalWatcher.EventArrived += (sender, e) =>
+            removalWatcher.EventArrived += RemovalWatcher_EventArrived;
+            
+            removalWatcher.Start();
+        }
+
+        private void ArrivalWatcher_EventArrived(object sender, EventArrivedEventArgs e)
+        {
+            var instance = (ManagementBaseObject)e.NewEvent["TargetInstance"];
+            string deviceId = instance["DeviceID"].ToString();
+            if (deviceId.Contains($"USB\\VID_{PS4SysconTool.PS4_SYSCON_FLASHER_VID}&PID_{PS4SysconTool.PS4_SYSCON_FLASHER_1_PID}&MI_00") ||
+                deviceId.Contains($"USB\\VID_{PS4SysconTool.PS4_SYSCON_FLASHER_VID}&PID_{PS4SysconTool.PS4_SYSCON_FLASHER_2_PID}&MI_00"))
             {
-                var instance = (ManagementBaseObject)e.NewEvent["TargetInstance"];
-                string deviceId = instance["DeviceID"].ToString();
-                if (deviceId.Contains($"USB\\VID_{PS4SysconTool.PS4_SYSCON_FLASHER_VID}&PID_{PS4SysconTool.PS4_SYSCON_FLASHER_PID}"))
+                comPort = GetComPortFromDeviceId(deviceId);
+                if (comPort != null)
+                {
+                    isDetected = ps4SysconTool.PS4SysconToolDetect(comPort, out version, out freememory);
+                }
+                else
                 {
                     isDetected = false;
                     comPort = "";
                     version = "";
                     isInit = false;
                     txtLog.Clear();
-
-                    UpdateStatus(isDetected, version);
                 }
 
+                UpdateStatus(isDetected, version);
+            }
+        }
 
-            };
-            removalWatcher.Start();
+        private void RemovalWatcher_EventArrived(object sender, EventArrivedEventArgs e)
+        {
+            var instance = (ManagementBaseObject)e.NewEvent["TargetInstance"];
+            string deviceId = instance["DeviceID"].ToString();
+            if (deviceId.Contains($"USB\\VID_{PS4SysconTool.PS4_SYSCON_FLASHER_VID}&PID_{PS4SysconTool.PS4_SYSCON_FLASHER_1_PID}&MI_00") ||
+                deviceId.Contains($"USB\\VID_{PS4SysconTool.PS4_SYSCON_FLASHER_VID}&PID_{PS4SysconTool.PS4_SYSCON_FLASHER_2_PID}&MI_00"))
+            {
+                isDetected = false;
+                comPort = "";
+                version = "";
+                isInit = false;
+                txtLog.Clear();
+
+                UpdateStatus(isDetected, version);
+            }
         }
 
         private static string GetComPortName(ManagementBaseObject targetInstance)

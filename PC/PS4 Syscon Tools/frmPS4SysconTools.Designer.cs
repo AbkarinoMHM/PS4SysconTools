@@ -97,7 +97,7 @@
             // 
             tslSysconTool.ForeColor = System.Drawing.Color.Blue;
             tslSysconTool.Name = "tslSysconTool";
-            tslSysconTool.Size = new System.Drawing.Size(75, 17);
+            tslSysconTool.Size = new System.Drawing.Size(76, 17);
             tslSysconTool.Text = "Syscon Tool :";
             // 
             // tslSysconToolValue
@@ -461,7 +461,7 @@
             MaximizeBox = false;
             Name = "frmPS4SysconTools";
             StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            Text = "PS4 Syscon Tools v2.2.0  by Abkarino & EgyCnq";
+            Text = "PS4 Syscon Tools v2.3.0  by Abkarino & EgyCnq";
             Load += frmPS4SysconTools_Load;
             staMain.ResumeLayout(false);
             staMain.PerformLayout();

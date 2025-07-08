@@ -12,7 +12,8 @@ namespace PS4_Syscon_Tools
     {
 
         public const string PS4_SYSCON_FLASHER_VID = "16C0";
-        public const string PS4_SYSCON_FLASHER_PID = "0483";
+        public const string PS4_SYSCON_FLASHER_1_PID = "0483";
+        public const string PS4_SYSCON_FLASHER_2_PID = "047A";
 
         public const int SYSCON_BLOCK_SIZE = 0x400;
         public const int SYSCON_BUFFER_SIZE = 0x80;
@@ -68,6 +69,19 @@ namespace PS4_Syscon_Tools
             WRITE_NVS_SNVS,         // Write Syscon NVS/SNVS Only
             ENABLE_DEBUG_MODE,      // Enable Syscon Debug Mode (ReWrite Boot0 Blocks)
         };
+
+        public enum SYSCON_RESULT { 
+                SUCCESS,
+                GENERAL_ERROR = -1,
+                SYSCON_FLASHER_NOT_CONNECTED = -2,
+                SYSCON_READ_ERROR = -3,
+                SYSCON_WRITE_ERROR = -4,
+                SYSCON_ERASE_ERROR = -5,
+                SYSCON_RESULT_ERROR = -6,
+                START_BLOCK_GREATER_THAN_END_BLOCK = -9,
+                WRITE_BUFFER_ERROR = -10,
+                WRONG_DUMP_FILE_PATH = -11
+        } 
 
         public class SysconProcess
         {
@@ -311,7 +325,7 @@ namespace PS4_Syscon_Tools
                 {
                     debugMode = false;
                     isConnected = false;
-                    return 0;
+                    return (int)SYSCON_RESULT.SUCCESS;
                 }
 
                 ps4SysconFlasher.Write(new byte[] { (byte)SYSCON_COMMANDS.SYSCON_CMD_UNINIT }, 0, 1);   // uninit command
@@ -331,12 +345,12 @@ namespace PS4_Syscon_Tools
                     isDebugMode = false;
                     isConnected = false;
                     bolFinished = true;
-                    iRet = 0;
+                    iRet = (int)SYSCON_RESULT.SUCCESS;
                     ps4SysconFlasher.Close();
                 }
                 else
                 {
-                    iRet = -1;
+                    iRet = (int)SYSCON_RESULT.GENERAL_ERROR;
                 }
             }
             catch (Exception ex)
@@ -390,7 +404,7 @@ namespace PS4_Syscon_Tools
         }
 
         public int PS4SysconToolDump(SerialPortStream ps4SysconFlasher, out byte[] buffer, int startBlock, int endBlock) {
-            int iRet = -1;
+            int iRet = (int)SYSCON_RESULT.SYSCON_READ_ERROR;
             int iBlockNo = 1;
             int iNoOfBlocks = 0;
             int iReadedData = 0;
@@ -399,7 +413,7 @@ namespace PS4_Syscon_Tools
             if (startBlock > endBlock)
             {
                 buffer = new byte[] { };
-                return -2;
+                return (int)SYSCON_RESULT.START_BLOCK_GREATER_THAN_END_BLOCK;
             }
 
             iNoOfBlocks = (endBlock - startBlock) + 1;
@@ -424,7 +438,7 @@ namespace PS4_Syscon_Tools
                 if (!ps4SysconFlasher.IsOpen || !isConnected)
                 {
                     buffer = new byte[] { };
-                    return -2;
+                    return (int)SYSCON_RESULT.SYSCON_FLASHER_NOT_CONNECTED;
                 }
 
                 ps4SysconFlasher.DiscardInBuffer();
@@ -446,7 +460,7 @@ namespace PS4_Syscon_Tools
                     if (iRet != SYSCON_BLOCK_SIZE)
                     {
                         buffer = new byte[] { };
-                        return -3;
+                        return (int)SYSCON_RESULT.SYSCON_READ_ERROR;
                     }
 
                     iBlockNo++;
@@ -459,7 +473,7 @@ namespace PS4_Syscon_Tools
 
                     Array.Copy(sysconBuffer, buffer, sysconBuffer.Length);
 
-                    iRet = 0;
+                    iRet = (int)SYSCON_RESULT.SUCCESS;
 
                     OnUpdateProcessEvent(new UpdateProcessEventArgs((int)iNoOfBlocks, "Dump Syscon Firmware Process Finished.."));
 
@@ -467,7 +481,7 @@ namespace PS4_Syscon_Tools
                 else
                 {
                     buffer = new byte[] { };
-                    return -4;
+                    return (int)SYSCON_RESULT.SYSCON_READ_ERROR;
                 }
 
             }
@@ -480,18 +494,9 @@ namespace PS4_Syscon_Tools
         }
 
         public int PS4SysconToolDump(SerialPortStream ps4SysconFlasher, string filePath, int startBlock, int endBlock) {
-            int iRet = -1;
+            int iRet = (int)SYSCON_RESULT.SYSCON_READ_ERROR;
             int iNoOfBlocks = 0;
             byte[] sysconBuffer;
-
-            if (startBlock > endBlock)
-            {
-                return -2;
-            }
-
-            iNoOfBlocks = (endBlock - startBlock) + 1;
-
-            sysconBuffer = new byte[iNoOfBlocks * SYSCON_BLOCK_SIZE];
 
             try
             {
@@ -526,21 +531,21 @@ namespace PS4_Syscon_Tools
 
         public int PS4SysconToolFullDump(SerialPortStream ps4SysconFlasher, string filePath)
         {
-            int iRet = -1;
+            int iRet = (int)SYSCON_RESULT.SYSCON_READ_ERROR;
             int iReadedData = 0;
             int iBlockNo = 0;
             byte[] sysconFWBuffer = new byte[SYSCON_FLASH_SIZE];
 
             if (String.IsNullOrEmpty(filePath))
             {
-                return -1;
+                return (int)SYSCON_RESULT.WRONG_DUMP_FILE_PATH;
             }
 
             try
             {
                 if (!ps4SysconFlasher.IsOpen || !isConnected)
                 {
-                    return -2;
+                    return (int)SYSCON_RESULT.SYSCON_FLASHER_NOT_CONNECTED;
                 }
 
                 stopWatch = new Stopwatch();
@@ -564,29 +569,20 @@ namespace PS4_Syscon_Tools
 
                     for (int i = 0; i < SYSCON_BLOCK_SIZE; i += SYSCON_BUFFER_SIZE)
                     {
+                        while ((ps4SysconFlasher.BytesToRead < SYSCON_BUFFER_SIZE))
+                        {
+                            System.Threading.Thread.Sleep(100);
+                        }
+
                         iRet = ps4SysconFlasher.Read(sysconFWBuffer, iReadedData, SYSCON_BUFFER_SIZE);
                         if (iRet != SYSCON_BUFFER_SIZE)
                         {
-                            return -3;
+                            return (int)SYSCON_RESULT.SYSCON_READ_ERROR;
                         }
 
                         iReadedData += SYSCON_BUFFER_SIZE;
                         
                     }
-
-                    //while ((ps4SysconFlasher.BytesToRead < SYSCON_BLOCK_SIZE))
-                    //{
-                    //    //System.Threading.Thread.Sleep(100);
-                    //}
-
-
-                    //iRet = ps4SysconFlasher.Read(sysconFWBuffer, iReadedData, SYSCON_BLOCK_SIZE);
-                    //if (iRet != SYSCON_BLOCK_SIZE)
-                    //{
-                    //    return -3;
-                    //}
-
-                    // iReadedData += SYSCON_BLOCK_SIZE;
 
                     iBlockNo++;
                 }
@@ -608,14 +604,14 @@ namespace PS4_Syscon_Tools
                         OnUpdateProcessEvent(new UpdateProcessEventArgs((int)SYSCON_FLASH_SIZE, "Dumping Syscon Firmware Process Finished Successfully.."));
                     }
 
-                    iRet = 0;
+                    iRet = (int)SYSCON_RESULT.SUCCESS;
 
                 }
 
             }
             catch (Exception ex)
             {
-                iRet = -1;
+                iRet = (int)SYSCON_RESULT.SYSCON_READ_ERROR;
                 throw ex;
             }
 
@@ -628,13 +624,13 @@ namespace PS4_Syscon_Tools
 
         public int PS4SysconToolErase(SerialPortStream ps4SysconFlasher, int startBlock, int endBlock)
         {
-            int iRet = -1;
+            int iRet = (int)SYSCON_RESULT.SYSCON_ERASE_ERROR;
             int iBlockNo = 0;
             int iNoOfBlocks = 0;
 
             if (startBlock > endBlock)
             {
-                return -2;
+                return (int)SYSCON_RESULT.START_BLOCK_GREATER_THAN_END_BLOCK;
             }
 
             iNoOfBlocks = (endBlock - startBlock) + 1;
@@ -656,7 +652,7 @@ namespace PS4_Syscon_Tools
 
                 if (!ps4SysconFlasher.IsOpen || !isConnected)
                 {
-                    return -2;
+                    return (int)SYSCON_RESULT.SYSCON_FLASHER_NOT_CONNECTED;
                 }
 
                 ps4SysconFlasher.DiscardInBuffer();
@@ -677,20 +673,19 @@ namespace PS4_Syscon_Tools
                     response = ps4SysconFlasher.ReadByte();
                     if (response != SYSCON_OK)
                     {
-                        return -4;
+                        return (int)SYSCON_RESULT.SYSCON_ERASE_ERROR;
                     }
 
                     iBlockNo++;
                 }
 
                 OnUpdateProcessEvent(new UpdateProcessEventArgs((int)iNoOfBlocks, "Erase Partial Syscon FW Finished.."));
-                iRet = 0;
+                iRet = (int)SYSCON_RESULT.SUCCESS;
 
             }
             catch (Exception ex)
             {
-
-                throw ex;
+                throw;
             }
 
 
@@ -704,26 +699,21 @@ namespace PS4_Syscon_Tools
 
         public int PS4SysconToolWrite(SerialPortStream ps4SysconFlasher, byte[] buffer, int startBlock, int endBlock, bool extendedMode = false)
         {
-            int iRet = -1;
+            int iRet = (int) SYSCON_RESULT.SYSCON_WRITE_ERROR;
             int iWrittenData = 0;
             int iBlockNo = 0;
             int iNoOfBlocks = 0;
             int iCounter = 0;
             int iWriteDataLen = 0;
 
-            if (buffer == null)
+            if ((buffer == null) || (buffer.Length <= 0) || ((buffer.Length % SYSCON_BLOCK_SIZE) != 0))
             {
-                return -1;
-            }
-
-            if (buffer.Length <= 0 || ((buffer.Length % SYSCON_BLOCK_SIZE) != 0))
-            {
-                return -1;
+                return (int)SYSCON_RESULT.WRITE_BUFFER_ERROR;
             }
 
             if (startBlock > endBlock)
             {
-                return -2;
+                return (int)SYSCON_RESULT.START_BLOCK_GREATER_THAN_END_BLOCK;
             }
 
             iNoOfBlocks = (endBlock - startBlock) + 1;
@@ -736,7 +726,7 @@ namespace PS4_Syscon_Tools
             {
                 if (!ps4SysconFlasher.IsOpen || !isConnected)
                 {
-                    return -2;
+                    return (int)SYSCON_RESULT.SYSCON_FLASHER_NOT_CONNECTED;
                 }
 
                 iCounter = 1;
@@ -771,13 +761,13 @@ namespace PS4_Syscon_Tools
 
                     while (ps4SysconFlasher.BytesToRead < 1)
                     {
-                        //int x  = ps4SysconFlasher.BytesToRead;
+                        System.Threading.Thread.Sleep(10);
                     }
 
                     bRet = (byte)ps4SysconFlasher.ReadByte();
-                    if (bRet != 0)
+                    if (bRet != SYSCON_OK)
                     {
-                        return iRet;
+                        return (int)SYSCON_RESULT.SYSCON_WRITE_ERROR;
                     }
 
                     iWrittenData += SYSCON_BLOCK_SIZE;
@@ -785,7 +775,7 @@ namespace PS4_Syscon_Tools
                 }
 
                 OnUpdateProcessEvent(new UpdateProcessEventArgs(iNoOfBlocks, "Writting Syscon Firmware Process Finished Successfully!."));
-                iRet = 0;
+                iRet = (int)SYSCON_RESULT.SUCCESS;
             }
             catch (Exception ex)
             {
@@ -798,24 +788,24 @@ namespace PS4_Syscon_Tools
 
         public int PS4SysconToolWrite(SerialPortStream ps4SysconFlasher, string filePath, int startBlock, int endBlock, bool extendedMode = false)
         {
-            int iRet = -1;
+            int iRet = (int)SYSCON_RESULT.SYSCON_WRITE_ERROR;
             int iNoOfBlocks = 0;
             int iWriteDataLen = 0;
             byte[] sysconFWBuffer;
 
             if (String.IsNullOrEmpty(filePath))
             {
-                return -1;
+                return (int)SYSCON_RESULT.WRONG_DUMP_FILE_PATH;
             }
 
             if (!File.Exists(filePath))
             {
-                return -2;
+                return (int)SYSCON_RESULT.WRONG_DUMP_FILE_PATH;
             }
 
             if (startBlock > endBlock)
             {
-                return -2;
+                return (int)SYSCON_RESULT.START_BLOCK_GREATER_THAN_END_BLOCK;
             }
 
             iNoOfBlocks = (endBlock - startBlock) + 1;
