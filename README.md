@@ -53,7 +53,7 @@ Usage - Tutorial:
 Please refer to PS4 Syscon Tool Tutorial on the following link:
 https://www.youtube.com/watch?v=Abu-M_z_I-c&t=11s
 
-Creadit:
+Credit:
 ========================================
 - droogie (https://twitter.com/droogie1xp):
 	For early syscon investigations & identifying original Syscon chip arch.
